@@ -13,17 +13,38 @@
       log out, and log back in again)
 """
 from io import StringIO
+import sys
 import os
 import re
+import time
+import logging
 from datetime import datetime, timedelta
 import requests
+import numpy as np
 import pandas as pd
 
 SECONDS_PER_DAY = 60 * 60 * 24
 
+def get_logger(filename='/home/jack/data/pvoutput.org/processed/UK_PV_timeseries.log', 
+               mode='a', 
+               level=logging.DEBUG,
+               stream_handler=False):
+    logger = logging.getLogger('pv_output')
+    logger.setLevel(level)
+    logger.handlers = [logging.FileHandler(filename=filename, mode=mode)]
+    if stream_handler:
+        logger.handlers.append(logging.StreamHandler(sys.stdout))
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    for handler in logger.handlers:
+        handler.setFormatter(formatter)
+    return logger
+
+
+logger = get_logger()
+
 
 class BadStatusCode(Exception):
-    def __init__(self, message='', status_code, response_content, response_headers):
+    def __init__(self, message='', status_code=None, response_content=None, response_headers=None):
         self.status_code = status_code
         self.response_content = response_content
         self.response_headers = response_headers
@@ -41,6 +62,10 @@ class MaxRetryError(BadStatusCode):
     pass
     
 
+class NoStatusFound(BadStatusCode):
+    pass
+    
+
 def pv_output_api_query(service, api_params, retries=5):
     """
     Args:
@@ -50,6 +75,7 @@ def pv_output_api_query(service, api_params, retries=5):
     Raises:
         MaxRetryError
         BadStatusCode
+        NoStatusFound
     """   
     headers = {
         'X-Pvoutput-Apikey': os.environ['PVOUTPUT_APIKEY'],
@@ -64,26 +90,37 @@ def pv_output_api_query(service, api_params, retries=5):
     try:
         content = response.content.decode('latin1').strip()
     except UnicodeDecodeError as e:
-        print("Error decoding this string: {}\n{}".format(content, e))
+        msg = "Error decoding this string: {}\n{}".format(content, e)
+        print(msg)
+        logger.exception(msg)
         raise
 
+    if response.status_code == 400:
+        # No point retrying if no status was found
+        raise NoStatusFound(
+                status_code=response.status_code, 
+                response_content=content,
+                response_headers=response.headers)
+        
     # Did we overshoot our quota?
-    if response.status_code == 403 and response.headers['X-Rate-Limit-Remaining'] == '0':
+    if response.status_code == 403 and int(response.headers['X-Rate-Limit-Remaining']) <= 0:
         if retries == 0:
             raise MaxRetryError(
                 status_code=response.status_code, 
                 response_content=content,
-                headers=response.headers)
+                response_headers=response.headers)
         # Wait until rate limit is reset
         rate_limit_reset_datetime = datetime.utcfromtimestamp(
             int(response.headers['X-Rate-Limit-Reset']))
         timedelta_to_wait = rate_limit_reset_datetime - datetime.utcnow()
         timedelta_to_wait += timedelta(minutes=3) # Just for safety
         retry_time = datetime.now() + timedelta_to_wait
-        secs_to_wait = timedelta.total_seconds()
-        print('Rate limit exceeded!  Waiting {:d} seconds.  Will retry at {}.'.format(
-            secs_to_wait, retry_time.strftime('%Y-%M-%d %H:%m:%S')))
-        print('Retries remaining =', retries)
+        secs_to_wait = timedelta_to_wait.total_seconds()
+        msg = 'Rate limit exceeded!  Waiting {:.0f} seconds.  Will retry at {}.\n'.format(
+            secs_to_wait, retry_time.strftime('%Y-%m-%d %H:%M:%S'))
+        msg += 'Retries remaining = {}'.format(retries)
+        print(msg)
+        logger.warning(msg)
         time.sleep(secs_to_wait)
         return pv_output_api_query(service, api_params, retries=retries-1)
 
@@ -92,16 +129,17 @@ def pv_output_api_query(service, api_params, retries=5):
             raise BadStatusCode(
                 status_code=response.status_code, 
                 response_content=content,
-                headers=response.headers)
-        print("Received bad status code:", response.status_code, content)
-        print("Retrying...")
+                response_headers=response.headers)
+        msg = "Received bad status code: {} {}\nRetrying...".format(response.status_code, content)
+        print(msg)
+        logger.warning(msg)
         time.sleep(1)
         return pv_output_api_query(service, api_params, retries=retries-1)
     else:
         return content
-        
 
-def pv_system_search(query, lat_lon):
+
+def pv_system_search(query, lat_lon, **kwargs):
     """
     Args:
         query: string, see https://pvoutput.org/help.html#search
@@ -118,7 +156,7 @@ def pv_system_search(query, lat_lon):
             'q': query,
             'll': lat_lon,
             'country': 1  # country flag, whether or not to return country with the postcode
-        })
+        }, **kwargs)
     
     pv_systems = pd.read_csv(
         StringIO(pv_systems_text),
@@ -140,12 +178,15 @@ def pv_system_search(query, lat_lon):
     return pv_systems
 
 
-def get_pv_system_status(pv_system_id, date):
+def get_pv_system_status(pv_system_id, date, **kwargs):
     """
     Args:
         pv_system_id: int
-        date: str, YYYYMMDD
+        date: str, YYYYMMDD; or datetime.datetime or pd.Timestamp
     """
+    if isinstance(date, datetime):
+        date = date.strftime('%Y%m%d')
+    
     pv_system_status_text = pv_output_api_query(
         service='getstatus',
         api_params={
@@ -156,15 +197,9 @@ def get_pv_system_status(pv_system_id, date):
                                        # some PV systems have 1-second updates.
             'ext': 0, # extended data; we don't want extended data because it's not clear how to parse it.
             'sid1': pv_system_id # SystemID
-        })
+        }, **kwargs)
     
-    pv_system_status = pd.read_csv(
-        StringIO(pv_system_status_text),
-        lineterminator=';',
-        names=[
-            'date',
-            'time',
-            'energy_generation_watt_hours',
+    columns = ['energy_generation_watt_hours',
             'energy_efficiency_kWh_per_kW',
             'inst_power_watt',
             'average_power_watt',
@@ -172,16 +207,21 @@ def get_pv_system_status(pv_system_id, date):
             'energy_consumption_watt_hours',
             'power_consumption_watts',
             'temperature_celsius',
-            'voltage'
-        ],
+            'voltage']
+    
+    pv_system_status = pd.read_csv(
+        StringIO(pv_system_status_text),
+        lineterminator=';',
+        names=['date', 'time'] + columns,
         parse_dates={'datetime': ['date', 'time']},
-        index_col=['datetime']
-    )
+        index_col=['datetime'],
+        dtype={col: np.float64 for col in columns}
+    ).sort_index()
     
     return pv_system_status
 
 
-def get_pv_metadata(pv_system_id):
+def get_pv_metadata(pv_system_id, **kwargs):
     """
     Args:
         pv_system_id: int
@@ -196,7 +236,7 @@ def get_pv_metadata(pv_system_id):
             'donations': 0,
             'sid1': pv_system_id, # SystemID
             'ext': 0, # extended data
-        })
+        }, **kwargs)
     
     pv_metadata = pd.read_csv(
         StringIO(pv_metadata_text),
@@ -229,4 +269,36 @@ def get_pv_metadata(pv_system_id):
     pv_metadata['system_id'] = pv_system_id
     pv_metadata.name = pv_system_id
     
+    return pv_metadata
+
+
+def get_pv_statistic(pv_system_id, **kwargs):
+    pv_metadata_text = pv_output_api_query(
+        service='getstatistic',
+        api_params={
+            'c': 0,  # consumption and import
+            'crdr': 0, # credits / debits
+            'sid1': pv_system_id, # SystemID
+        }, 
+        **kwargs)
+
+    pv_metadata = pd.read_csv(
+        StringIO(pv_metadata_text),
+        names=[
+            'energy_generated_Wh',
+            'energy_exported_Wh',
+            'average_generation_Wh',
+            'minimum_generation_Wh',
+            'maximum_generation_Wh',
+            'average_efficiency_kWh_per_kW',
+            'outputs',
+            'actual_date_from',
+            'actual_date_to',
+            'record_efficiency_kWh_per_kW',
+            'record_efficiency_date'
+        ],
+        parse_dates=['actual_date_from', 'actual_date_to', 'record_efficiency_date']
+    ).squeeze()
+    pv_metadata['system_id'] = pv_system_id
+    pv_metadata.name = pv_system_id
     return pv_metadata
