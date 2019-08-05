@@ -24,8 +24,10 @@ import numpy as np
 import pandas as pd
 
 SECONDS_PER_DAY = 60 * 60 * 24
+ONE_DAY = timedelta(days=1)
+PV_OUTPUT_DATE_FORMAT="%Y%m%d"
 
-def get_logger(filename='/home/jack/data/pvoutput.org/processed/UK_PV_timeseries.log', 
+def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log', 
                mode='a', 
                level=logging.DEBUG,
                stream_handler=False):
@@ -66,7 +68,7 @@ class NoStatusFound(BadStatusCode):
     pass
     
 
-def pv_output_api_query(service, api_params, retries=150):
+def pv_output_api_query(service, api_params, retries=150, seconds_between_retries=300):
     """
     Args:
         service: string, e.g. 'search', 'getstatus'
@@ -85,7 +87,21 @@ def pv_output_api_query(service, api_params, retries=150):
     api_base_url = 'https://pvoutput.org/service/r2/{}.jsp'.format(service)
     api_params_str = '&'.join(['{}={}'.format(key, value) for key, value in api_params.items()])
     api_url = '{}?{}'.format(api_base_url, api_params_str)
-    response = requests.get(api_url, headers=headers)
+    logger.debug('api_url=%s; headers=%s; service=%s; api_params=%s; retries=%d',
+                api_url, headers, service, api_params, retries)
+    
+    try:
+        response = requests.get(api_url, headers=headers)
+    except Exception as e:
+        msg = "request.get() failed"
+        print(msg)
+        logger.exception(msg)
+        if retries == 0:
+            raise
+        else:
+            time.sleep(seconds_between_retries)
+            return pv_output_api_query(service, api_params, retries=retries-1, 
+                                       seconds_between_retries=seconds_between_retries)
 
     try:
         content = response.content.decode('latin1').strip()
@@ -122,9 +138,11 @@ def pv_output_api_query(service, api_params, retries=150):
         print(msg)
         logger.warning(msg)
         time.sleep(secs_to_wait)
-        return pv_output_api_query(service, api_params, retries=retries-1)
+        return pv_output_api_query(service, api_params, retries=retries-1, seconds_between_retries=seconds_between_retries)
 
-    if response.status_code != 200:
+    if response.status_code == 200:  # Good status code.  Yay!
+        return content
+    else:
         if retries == 0:
             raise BadStatusCode(
                 status_code=response.status_code, 
@@ -133,10 +151,9 @@ def pv_output_api_query(service, api_params, retries=150):
         msg = "Received bad status code: {} {}\nRetrying...".format(response.status_code, content)
         print(msg)
         logger.warning(msg)
-        time.sleep(60 * 5)
-        return pv_output_api_query(service, api_params, retries=retries-1)
-    else:
-        return content
+        time.sleep(seconds_between_retries)
+        return pv_output_api_query(service, api_params, retries=retries-1, seconds_between_retries=seconds_between_retries)
+        
 
 
 def pv_system_search(query, lat_lon, **kwargs):
@@ -178,14 +195,29 @@ def pv_system_search(query, lat_lon, **kwargs):
     return pv_systems
 
 
+def date_to_pvoutput_str(date):
+    if isinstance(date, str):
+        return date
+    else:
+        return date.strftime(PV_OUTPUT_DATE_FORMAT)
+
+
+def _check_date(date):
+    dt = datetime.strptime(date, PV_OUTPUT_DATE_FORMAT)
+    if dt > datetime.now():
+        raise ValueError(
+            'date should not be in the future.  Got {}.  Current date is {}.'
+            .format(date, datetime.now()))
+        
+
 def get_pv_system_status(pv_system_id, date, **kwargs):
     """
     Args:
         pv_system_id: int
-        date: str, YYYYMMDD; or datetime.datetime or pd.Timestamp
+        date: str, YYYYMMDD
     """
-    if isinstance(date, datetime):
-        date = date.strftime('%Y%m%d')
+    date = date_to_pvoutput_str(date)
+    _check_date(date)
     
     pv_system_status_text = pv_output_api_query(
         service='getstatus',
@@ -219,6 +251,17 @@ def get_pv_system_status(pv_system_id, date, **kwargs):
     ).sort_index()
     
     return pv_system_status
+
+
+def check_pv_system_status(pv_system_status, requested_date_str):
+    if not isinstance(pv_system_status, pd.DataFrame):
+        raise ValueError('pv_system_status must be a dataframe')
+    requested_date = datetime.strptime(requested_date_str, "%Y%m%d").date()
+    if len(pv_system_status) > 0:
+        index = pv_system_status.index
+        for d in [index[0], index[-1]]:
+            if not (requested_date <= d.date() <= requested_date + ONE_DAY):
+                  raise ValueError('A date in the index is outside the expected range. Date from index={}, requested_date={}'.format(d, requested_date_str))
 
 
 def get_pv_metadata(pv_system_id, **kwargs):
