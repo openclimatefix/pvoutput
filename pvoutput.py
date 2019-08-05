@@ -66,7 +66,7 @@ class NoStatusFound(BadStatusCode):
     pass
     
 
-def pv_output_api_query(service, api_params, retries=5):
+def pv_output_api_query(service, api_params, retries=150):
     """
     Args:
         service: string, e.g. 'search', 'getstatus'
@@ -133,7 +133,7 @@ def pv_output_api_query(service, api_params, retries=5):
         msg = "Received bad status code: {} {}\nRetrying...".format(response.status_code, content)
         print(msg)
         logger.warning(msg)
-        time.sleep(1)
+        time.sleep(60 * 5)
         return pv_output_api_query(service, api_params, retries=retries-1)
     else:
         return content
