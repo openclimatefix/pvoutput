@@ -224,9 +224,7 @@ def get_pv_system_status(pv_system_id, date, **kwargs):
         api_params={
             'd': date, # date, YYYYMMDD
             'h': 1,  # History; we want historical data
-            'limit': SECONDS_PER_DAY,  # API docs say limit is 288 (number of 5-min periods per day),
-                                       # but let's try to get number of secs per day just in case 
-                                       # some PV systems have 1-second updates.
+            'limit': 288,  # API docs say limit is 288 (number of 5-min periods per day)
             'ext': 0, # extended data; we don't want extended data because it's not clear how to parse it.
             'sid1': pv_system_id # SystemID
         }, **kwargs)
