@@ -19,6 +19,7 @@ import re
 import time
 import logging
 from datetime import datetime, timedelta
+import urllib3
 import requests
 import numpy as np
 import pandas as pd
@@ -46,38 +47,50 @@ logger = get_logger()
 
 
 class BadStatusCode(Exception):
-    def __init__(self, message='', status_code=None, response_content=None, response_headers=None):
-        self.status_code = status_code
-        self.response_content = response_content
-        self.response_headers = response_headers
+    def __init__(self, response, message=''):
+        self.response = response
         super(BadStatusCode, self).__init__(message)
         
     def __str__(self):
         string = super(BadStatusCode, self).__str__()
-        string += " Bad status code returned: {}\n".format(self.status_code)
-        string += " Response content: {}\n".format(self.response_content)
-        string += " Response headers: {}".format(self.response_headers)
+        string += "Status code returned: {}\n".format(self.response.status_code)
+        string += "Response content: {}\n".format(self.response.content)
+        string += "Response headers: {}".format(self.response.headers)
         return string
 
 
-class MaxRetryError(BadStatusCode):
-    pass
-    
-
 class NoStatusFound(BadStatusCode):
     pass
-    
 
-def pv_output_api_query(service, api_params, retries=150, seconds_between_retries=300):
+
+class RateLimitExceeded(BadStatusCode):
+    def __init__(self, *args, **kwargs):
+        super(RateLimitExceeded, self).__init__(*args, **kwargs)
+        self._set_params()
+
+    def _set_params(self):
+        self.utc_now = datetime.utcnow()
+        self.rate_limit_reset_datetime = datetime.utcfromtimestamp(
+            int(self.response.headers['X-Rate-Limit-Reset']))
+        self.timedelta_to_wait = self.rate_limit_reset_datetime - self.utc_now
+        self.timedelta_to_wait += timedelta(minutes=3) # Just for safety
+        self.secs_to_wait = self.timedelta_to_wait.total_seconds()
+        
+    def __str__(self):
+        return 'Rate limit exceeded!'
+
+    def wait_message(self):
+        retry_time_utc = self.utc_now + self.timedelta_to_wait
+        return '{}  Waiting {:.0f} seconds.  Will retry at {} UTC.'.format(
+            self, self.secs_to_wait,
+            retry_time_utc.strftime('%Y-%m-%d %H:%M:%S'))
+
+
+def _get_api_reponse(service, api_params):
     """
     Args:
         service: string, e.g. 'search', 'getstatus'
         api_params: dict
-        retries: int
-    Raises:
-        MaxRetryError
-        BadStatusCode
-        NoStatusFound
     """   
     headers = {
         'X-Pvoutput-Apikey': os.environ['PVOUTPUT_APIKEY'],
@@ -85,77 +98,86 @@ def pv_output_api_query(service, api_params, retries=150, seconds_between_retrie
         'X-Rate-Limit': '1'}
 
     api_base_url = 'https://pvoutput.org/service/r2/{}.jsp'.format(service)
-    api_params_str = '&'.join(['{}={}'.format(key, value) for key, value in api_params.items()])
+    api_params_str = '&'.join(
+        ['{}={}'.format(key, value) for key, value in api_params.items()])
     api_url = '{}?{}'.format(api_base_url, api_params_str)
-    logger.debug('api_url=%s; headers=%s; service=%s; api_params=%s; retries=%d',
-                api_url, headers, service, api_params, retries)
-    
-    try:
-        response = requests.get(api_url, headers=headers)
-    except Exception as e:
-        msg = "request.get() failed"
-        print(msg)
-        logger.exception(msg)
-        if retries == 0:
-            raise
-        else:
-            time.sleep(seconds_between_retries)
-            return pv_output_api_query(service, api_params, retries=retries-1, 
-                                       seconds_between_retries=seconds_between_retries)
-    else:
-        logger.debug('response: status_code=%d headers=%s', response.status_code, response.headers)
+    logger.debug(
+        'service=%s\napi_params=%s\napi_url=%s\nheaders=%s',
+        service, api_params, api_url, headers)
+    response = requests.get(api_url, headers=headers)
+    logger.debug(
+        'response: status_code=%d; headers=%s',
+        response.status_code, response.headers)
+    return response
 
+
+def _process_api_response(response):
     try:
         content = response.content.decode('latin1').strip()
     except UnicodeDecodeError as e:
-        msg = "Error decoding this string: {}\n{}".format(content, e)
+        msg = "Error decoding this string: {}\n{}".format(response.content, e)
         print(msg)
         logger.exception(msg)
         raise
 
     if response.status_code == 400:
-        # No point retrying if no status was found
-        raise NoStatusFound(
-                status_code=response.status_code, 
-                response_content=content,
-                response_headers=response.headers)
+        raise NoStatusFound(response=response)
         
     # Did we overshoot our quota?
-    if response.status_code == 403 and int(response.headers['X-Rate-Limit-Remaining']) <= 0:
-        if retries == 0:
-            raise MaxRetryError(
-                status_code=response.status_code, 
-                response_content=content,
-                response_headers=response.headers)
-        # Wait until rate limit is reset
-        rate_limit_reset_datetime = datetime.utcfromtimestamp(
-            int(response.headers['X-Rate-Limit-Reset']))
-        timedelta_to_wait = rate_limit_reset_datetime - datetime.utcnow()
-        timedelta_to_wait += timedelta(minutes=3) # Just for safety
-        retry_time = datetime.now() + timedelta_to_wait
-        secs_to_wait = timedelta_to_wait.total_seconds()
-        msg = 'Rate limit exceeded!  Waiting {:.0f} seconds.  Will retry at {}.\n'.format(
-            secs_to_wait, retry_time.strftime('%Y-%m-%d %H:%M:%S'))
-        msg += 'Retries remaining = {}'.format(retries)
-        print(msg)
-        logger.warning(msg)
-        time.sleep(secs_to_wait)
-        return pv_output_api_query(service, api_params, retries=retries-1, seconds_between_retries=seconds_between_retries)
+    rate_limit_remaining = int(response.headers['X-Rate-Limit-Remaining'])
+    if response.status_code == 403 and rate_limit_remaining <= 0:
+        raise RateLimitExceeded(response=response)
 
-    if response.status_code == 200:  # Good status code.  Yay!
-        return content
-    else:
-        if retries == 0:
-            raise BadStatusCode(
-                status_code=response.status_code, 
-                response_content=content,
-                response_headers=response.headers)
-        msg = "Received bad status code: {} {}\nRetrying...".format(response.status_code, content)
-        print(msg)
-        logger.warning(msg)
-        time.sleep(seconds_between_retries)
-        return pv_output_api_query(service, api_params, retries=retries-1, seconds_between_retries=seconds_between_retries)
-        
+    if response.status_code != 200:
+        raise BadStatusCode(response=response)
+
+    # If we get to here then the content is valid :)
+    return content
+
+
+def pv_output_api_query(
+        service, api_params, retries=150, seconds_between_retries=300,
+        wait_if_rate_limit_exceeded=True):
+    """
+    Args:
+        service: string, e.g. 'search' or 'getstatus'
+        api_params: dict
+        retries: int
+        seconds_between_retries: int
+        wait_if_rate_limit_exceeded: bool
+    Raises:
+        BadStatusCode
+        NoStatusFound
+        RateLimitExceeded
+    """
+    # TODO use Request's retry logic
+    for retries_remaining in range(retries, -1, -1):
+        try:
+            response = _get_api_reponse(service, api_params)
+        except urllib3.exceptions.HTTPError as e:
+            logger.exception(
+                'Exception!  Retries remaining: %d; Exception: %s: %s',
+                retries_remaining, e.__class__.__name__, e)
+            if retries_remaining == 0:
+                raise
+            else:
+                logger.info('Waiting %d seconds and then retrying.',
+                            seconds_between_retries)
+                time.sleep(seconds_between_retries)
+        else:
+            break
+
+    try:
+        return _process_api_response(response)
+    except RateLimitExceeded as e:
+        if wait_if_rate_limit_exceeded:
+            logger.info(e.wait_message())
+            time.sleep(e.secs_to_wait)
+            return pv_output_api_query(
+                service, api_params, retries, seconds_between_retries,
+                wait_if_rate_limit_exceeded=False)
+        else:
+            raise
 
 
 def pv_system_search(query, lat_lon, **kwargs):
@@ -224,12 +246,13 @@ def get_pv_system_status(pv_system_id, date, **kwargs):
     pv_system_status_text = pv_output_api_query(
         service='getstatus',
         api_params={
-            'd': date, # date, YYYYMMDD
-            'h': 1,  # History; we want historical data
-            'limit': 288,  # API docs say limit is 288 (number of 5-min periods per day)
-            'ext': 0, # extended data; we don't want extended data because it's not clear how to parse it.
-            'sid1': pv_system_id # SystemID
-        }, **kwargs)
+            'd': date, # date, YYYYMMDD.
+            'h': 1,  # We want historical data.
+            'limit': 288,  # API docs say limit is 288 (number of 5-min periods per day).
+            'ext': 0, # Extended data; we don't want extended data.
+            'sid1': pv_system_id # SystemID.
+        },
+        **kwargs)
     
     columns = ['energy_generation_watt_hours',
             'energy_efficiency_kWh_per_kW',
@@ -261,7 +284,10 @@ def check_pv_system_status(pv_system_status, requested_date_str):
         index = pv_system_status.index
         for d in [index[0], index[-1]]:
             if not (requested_date <= d.date() <= requested_date + ONE_DAY):
-                  raise ValueError('A date in the index is outside the expected range. Date from index={}, requested_date={}'.format(d, requested_date_str))
+                  raise ValueError(
+                      'A date in the index is outside the expected range.'
+                      ' Date from index={}, requested_date={}'
+                      .format(d, requested_date_str))
 
 
 def get_pv_metadata(pv_system_id, **kwargs):
