@@ -102,6 +102,8 @@ def pv_output_api_query(service, api_params, retries=150, seconds_between_retrie
             time.sleep(seconds_between_retries)
             return pv_output_api_query(service, api_params, retries=retries-1, 
                                        seconds_between_retries=seconds_between_retries)
+    else:
+        logger.debug('response: status_code=%d headers=%s', response.status_code, response.headers)
 
     try:
         content = response.content.decode('latin1').strip()
