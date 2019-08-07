@@ -29,11 +29,12 @@ SECONDS_PER_DAY = 60 * 60 * 24
 ONE_DAY = timedelta(days=1)
 PV_OUTPUT_DATE_FORMAT="%Y%m%d"
 
+
 def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log', 
                mode='a', 
                level=logging.DEBUG,
                stream_handler=False):
-    logger = logging.getLogger('pv_output')
+    logger = logging.getLogger(__name__)
     logger.setLevel(level)
     logger.handlers = [logging.FileHandler(filename=filename, mode=mode)]
     if stream_handler:
@@ -41,6 +42,12 @@ def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log'
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     for handler in logger.handlers:
         handler.setFormatter(formatter)
+    
+    # Attach urllib3's logger to our logger.
+    urllib3_log = logging.getLogger("urllib3")
+    urllib3_log.parent = logger
+    urllib3_log.propagate = True
+    
     return logger
 
 
@@ -125,12 +132,8 @@ def _get_api_reponse(service, api_params):
         ['{}={}'.format(key, value) for key, value in api_params.items()])
     api_url = '{}?{}'.format(api_base_url, api_params_str)
     
-    logger.debug(
-        'service=%s\napi_params=%s\napi_url=%s\nheaders=%s',
-        service, api_params, api_url, headers)
-    
     session = _get_session_with_retry()
-    reponse = session.get(api_url, headers=headers)
+    response = session.get(api_url, headers=headers)
     
     logger.debug(
         'response: status_code=%d; headers=%s',
@@ -152,6 +155,7 @@ def _process_api_response(response):
         
     # Did we overshoot our quota?
     rate_limit_remaining = int(response.headers['X-Rate-Limit-Remaining'])
+    logger.debug('Remaining API requests: %d', rate_limit_remaining)
     if response.status_code == 403 and rate_limit_remaining <= 0:
         raise RateLimitExceeded(response=response)
     
@@ -173,8 +177,8 @@ def pv_output_api_query(service, api_params, wait_if_rate_limit_exceeded=True):
     """
     try:
         response = _get_api_reponse(service, api_params)
-    except Exception:
-        logger.exception()
+    except Exception as e:
+        logger.exception(str(e))
         raise
     
     try:
