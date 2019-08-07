@@ -19,8 +19,9 @@ import re
 import time
 import logging
 from datetime import datetime, timedelta
-import urllib3
+from urllib3.util.retry import Retry
 import requests
+from requests.adapters import HTTPAdapter
 import numpy as np
 import pandas as pd
 
@@ -86,25 +87,51 @@ class RateLimitExceeded(BadStatusCode):
             retry_time_utc.strftime('%Y-%m-%d %H:%M:%S'))
 
 
+def _get_session_with_retry():
+    session = requests.Session()
+    max_retry_counts = dict(
+        connect=720,  # How many connection-related errors to retry on.
+                      # Set high because sometimes the network goes down for a
+                      # few hours at a time.
+                      # 720 x Retry.MAX_BACKOFF (120 s) = 86,400 s = 24 hrs
+        read=5,  # How many times to retry on read errors.
+        status=5  # How many times to retry on bad status codes.
+    )
+    retries = Retry(
+        total=max(max_retry_counts.values()),
+        backoff_factor=0.5,
+        status_forcelist=[500, 502, 503, 504],
+        **max_retry_counts
+    )
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    return session
+
+    
 def _get_api_reponse(service, api_params):
     """
     Args:
         service: string, e.g. 'search', 'getstatus'
         api_params: dict
-    """   
+    """
+    # Create request headers
     headers = {
         'X-Pvoutput-Apikey': os.environ['PVOUTPUT_APIKEY'],
         'X-Pvoutput-SystemId': os.environ['PVOUTPUT_SYSTEMID'],
         'X-Rate-Limit': '1'}
 
+    # Create request URL
     api_base_url = 'https://pvoutput.org/service/r2/{}.jsp'.format(service)
     api_params_str = '&'.join(
         ['{}={}'.format(key, value) for key, value in api_params.items()])
     api_url = '{}?{}'.format(api_base_url, api_params_str)
+
     logger.debug(
         'service=%s\napi_params=%s\napi_url=%s\nheaders=%s',
         service, api_params, api_url, headers)
-    response = requests.get(api_url, headers=headers)
+
+    session = _get_session_with_retry()
+    reponse = session.get(api_url, headers=headers)
+    
     logger.debug(
         'response: status_code=%d; headers=%s',
         response.status_code, response.headers)
@@ -128,44 +155,27 @@ def _process_api_response(response):
     if response.status_code == 403 and rate_limit_remaining <= 0:
         raise RateLimitExceeded(response=response)
 
-    if response.status_code != 200:
-        raise BadStatusCode(response=response)
+    response.raise_for_status()
 
     # If we get to here then the content is valid :)
     return content
 
 
-def pv_output_api_query(
-        service, api_params, retries=150, seconds_between_retries=300,
-        wait_if_rate_limit_exceeded=True):
+def pv_output_api_query(service, api_params, wait_if_rate_limit_exceeded=True):
     """
     Args:
         service: string, e.g. 'search' or 'getstatus'
         api_params: dict
-        retries: int
-        seconds_between_retries: int
         wait_if_rate_limit_exceeded: bool
     Raises:
-        BadStatusCode
         NoStatusFound
         RateLimitExceeded
     """
-    # TODO use Request's retry logic
-    for retries_remaining in range(retries, -1, -1):
-        try:
-            response = _get_api_reponse(service, api_params)
-        except urllib3.exceptions.HTTPError as e:
-            logger.exception(
-                'Exception!  Retries remaining: %d; Exception: %s: %s',
-                retries_remaining, e.__class__.__name__, e)
-            if retries_remaining == 0:
-                raise
-            else:
-                logger.info('Waiting %d seconds and then retrying.',
-                            seconds_between_retries)
-                time.sleep(seconds_between_retries)
-        else:
-            break
+    try:
+        response = _get_api_reponse(service, api_params)
+    except Exception:
+        logger.exception()
+        raise
 
     try:
         return _process_api_response(response)
