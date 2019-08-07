@@ -4,9 +4,9 @@
 
 1. Register with PVOutput.org
       As well as an API key, you *need* a SystemId to use the API.  
-      If you don't include a SystemId, then you'll get a "401 Unauthorized" response
-      from the PVOutput.org API.  If you don't have a PV system, click the
-      "energy consumption only" box when setting a system id on PVOutput.org.
+      If you don't include a SystemId, then you'll get a "401 Unauthorized" 
+      response from the PVOutput.org API.  If you don't have a PV system, click
+      the "energy consumption only" box when setting a system id on PVOutput.org
 
 2. Set the environment variables PVOUTPUT_APIKEY and PVOUTPUT_SYSTEMID 
       (on Linux, put `EXPORT PVOUTPUT_APIKEY="API KEY"` etc. into `.profile`, 
@@ -68,7 +68,7 @@ class RateLimitExceeded(BadStatusCode):
     def __init__(self, *args, **kwargs):
         super(RateLimitExceeded, self).__init__(*args, **kwargs)
         self._set_params()
-
+        
     def _set_params(self):
         self.utc_now = datetime.utcnow()
         self.rate_limit_reset_datetime = datetime.utcfromtimestamp(
@@ -79,7 +79,7 @@ class RateLimitExceeded(BadStatusCode):
         
     def __str__(self):
         return 'Rate limit exceeded!'
-
+    
     def wait_message(self):
         retry_time_utc = self.utc_now + self.timedelta_to_wait
         return '{}  Waiting {:.0f} seconds.  Will retry at {} UTC.'.format(
@@ -106,7 +106,7 @@ def _get_session_with_retry():
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
 
-    
+
 def _get_api_reponse(service, api_params):
     """
     Args:
@@ -118,17 +118,17 @@ def _get_api_reponse(service, api_params):
         'X-Pvoutput-Apikey': os.environ['PVOUTPUT_APIKEY'],
         'X-Pvoutput-SystemId': os.environ['PVOUTPUT_SYSTEMID'],
         'X-Rate-Limit': '1'}
-
+    
     # Create request URL
     api_base_url = 'https://pvoutput.org/service/r2/{}.jsp'.format(service)
     api_params_str = '&'.join(
         ['{}={}'.format(key, value) for key, value in api_params.items()])
     api_url = '{}?{}'.format(api_base_url, api_params_str)
-
+    
     logger.debug(
         'service=%s\napi_params=%s\napi_url=%s\nheaders=%s',
         service, api_params, api_url, headers)
-
+    
     session = _get_session_with_retry()
     reponse = session.get(api_url, headers=headers)
     
@@ -146,7 +146,7 @@ def _process_api_response(response):
         print(msg)
         logger.exception(msg)
         raise
-
+    
     if response.status_code == 400:
         raise NoStatusFound(response=response)
         
@@ -154,9 +154,9 @@ def _process_api_response(response):
     rate_limit_remaining = int(response.headers['X-Rate-Limit-Remaining'])
     if response.status_code == 403 and rate_limit_remaining <= 0:
         raise RateLimitExceeded(response=response)
-
+    
     response.raise_for_status()
-
+    
     # If we get to here then the content is valid :)
     return content
 
@@ -176,7 +176,7 @@ def pv_output_api_query(service, api_params, wait_if_rate_limit_exceeded=True):
     except Exception:
         logger.exception()
         raise
-
+    
     try:
         return _process_api_response(response)
     except RateLimitExceeded as e:
@@ -225,7 +225,7 @@ def pv_system_search(query, lat_lon, **kwargs):
             'latitude',
             'longitude'],
         index_col='system_id')
-
+    
     return pv_systems
 
 
@@ -360,7 +360,7 @@ def get_pv_statistic(pv_system_id, **kwargs):
             'sid1': pv_system_id, # SystemID
         }, 
         **kwargs)
-
+    
     pv_metadata = pd.read_csv(
         StringIO(pv_metadata_text),
         names=[
