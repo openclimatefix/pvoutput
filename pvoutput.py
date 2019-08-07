@@ -51,7 +51,7 @@ def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log'
     return logger
 
 
-logger = get_logger()
+_logger = get_logger()
 
 
 class BadStatusCode(Exception):
@@ -135,7 +135,7 @@ def _get_api_reponse(service, api_params):
     session = _get_session_with_retry()
     response = session.get(api_url, headers=headers)
     
-    logger.debug(
+    _logger.debug(
         'response: status_code=%d; headers=%s',
         response.status_code, response.headers)
     return response
@@ -146,8 +146,7 @@ def _process_api_response(response):
         content = response.content.decode('latin1').strip()
     except UnicodeDecodeError as e:
         msg = "Error decoding this string: {}\n{}".format(response.content, e)
-        print(msg)
-        logger.exception(msg)
+        _logger.exception(msg)
         raise
     
     if response.status_code == 400:
@@ -155,7 +154,7 @@ def _process_api_response(response):
         
     # Did we overshoot our quota?
     rate_limit_remaining = int(response.headers['X-Rate-Limit-Remaining'])
-    logger.debug('Remaining API requests: %d', rate_limit_remaining)
+    _logger.debug('Remaining API requests: %d', rate_limit_remaining)
     if response.status_code == 403 and rate_limit_remaining <= 0:
         raise RateLimitExceeded(response=response)
     
@@ -178,14 +177,14 @@ def pv_output_api_query(service, api_params, wait_if_rate_limit_exceeded=True):
     try:
         response = _get_api_reponse(service, api_params)
     except Exception as e:
-        logger.exception(str(e))
+        _logger.exception(e)
         raise
     
     try:
         return _process_api_response(response)
     except RateLimitExceeded as e:
         if wait_if_rate_limit_exceeded:
-            logger.info(e.wait_message())
+            _logger.info(e.wait_message())
             time.sleep(e.secs_to_wait)
             return pv_output_api_query(
                 service, api_params, retries, seconds_between_retries,
