@@ -187,8 +187,7 @@ def pv_output_api_query(service, api_params, wait_if_rate_limit_exceeded=True):
             _logger.info(e.wait_message())
             time.sleep(e.secs_to_wait)
             return pv_output_api_query(
-                service, api_params, retries, seconds_between_retries,
-                wait_if_rate_limit_exceeded=False)
+                service, api_params, wait_if_rate_limit_exceeded=False)
         else:
             raise
 
