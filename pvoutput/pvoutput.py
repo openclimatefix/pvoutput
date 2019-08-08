@@ -3,7 +3,7 @@ import sys
 import os
 import time
 import logging
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 from datetime import datetime, timedelta
 from urllib3.util.retry import Retry
 import requests
@@ -197,7 +197,12 @@ def pv_output_api_query(service: str,
             raise
 
 
-def pv_system_search(query: str, lat_lon: str = '', **kwargs) -> pd.DataFrame:
+def pv_system_search(query: str,
+                     lat: Optional[float] = None,
+                     lon: Optional[float] = None,
+                     include_country: bool = True,
+                     **kwargs
+                     ) -> pd.DataFrame:
     """Send a search query to PVOutput.org.
 
     Some quirks of the PVOutput.org API:
@@ -211,7 +216,11 @@ def pv_system_search(query: str, lat_lon: str = '', **kwargs) -> pd.DataFrame:
     Args:
         query: string, see https://pvoutput.org/help.html#search
             e.g. '5km'.
-        lat_lon: string, e.g. '52.0668589,-1.3484038'
+        lat: float, e.g. 52.0668589
+        lon: float, e.g. -1.3484038
+        include_country: bool, whether or not to include the country name with
+            the returned postcode.
+
 
     Returns:
         pd.DataFrame, one row per search results.  Index is PV system ID (int).
@@ -228,15 +237,13 @@ def pv_system_search(query: str, lat_lon: str = '', **kwargs) -> pd.DataFrame:
                 latitude,
                 longitude
     """
+    api_params = {'q': query, 'country': int(include_country)}
+
+    if lat is not None and lon is not None:
+        api_params['ll'] = '{:f},{:f}'.format(lat, lon)
 
     pv_systems_text = pv_output_api_query(
-        service='search',
-        api_params={
-            'q': query,
-            'll': lat_lon,
-            'country': 1  # Country flag, whether or not to return country
-                          # with the postcode.
-        }, **kwargs)
+        service='search', api_params=api_params, **kwargs)
 
     pv_systems = pd.read_csv(
         StringIO(pv_systems_text),
