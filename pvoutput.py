@@ -247,10 +247,25 @@ def _check_date(date):
         
 
 def get_pv_system_status(pv_system_id, date, **kwargs):
-    """
+    """Get PV system status (e.g. instantaneous power generation) for one day.
+
     Args:
         pv_system_id: int
         date: str, YYYYMMDD
+
+    Returns:
+        pd.DataFrame:
+            index: datetime (DatetimeIndex, localtime of the PV system)
+            columns:  (all np.float64):
+                energy_generation_watt_hours,
+                energy_efficiency_kWh_per_kW,
+                inst_power_watt,
+                average_power_watt,
+                normalised_output,
+                energy_consumption_watt_hours,
+                power_consumption_watts,
+                temperature_celsius,
+                voltage
     """
     date = date_to_pvoutput_str(date)
     _check_date(date)
@@ -266,15 +281,16 @@ def get_pv_system_status(pv_system_id, date, **kwargs):
         },
         **kwargs)
     
-    columns = ['energy_generation_watt_hours',
-            'energy_efficiency_kWh_per_kW',
-            'inst_power_watt',
-            'average_power_watt',
-            'normalised_output',
-            'energy_consumption_watt_hours',
-            'power_consumption_watts',
-            'temperature_celsius',
-            'voltage']
+    columns = [
+        'energy_generation_watt_hours',
+        'energy_efficiency_kWh_per_kW',
+        'inst_power_watt',
+        'average_power_watt',
+        'normalised_output',
+        'energy_consumption_watt_hours',
+        'power_consumption_watts',
+        'temperature_celsius',
+        'voltage']
     
     pv_system_status = pd.read_csv(
         StringIO(pv_system_status_text),
