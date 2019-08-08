@@ -16,9 +16,11 @@ Set the environment variables `PVOUTPUT_APIKEY` and `PVOUTPUT_SYSTEMID`
 (on Linux, put `EXPORT PVOUTPUT_APIKEY="API KEY"` etc. into `~/.profile`,
 log out, and log back in again)
 
+
 ## Install pvoutput Python library
 
-TODO
+`pip install -e .`
+
 
 # Usage
 

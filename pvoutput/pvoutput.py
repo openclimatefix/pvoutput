@@ -1,20 +1,15 @@
-"""PVOutput.org utils
-
-## How to setup this notebook
-
-"""
 from io import StringIO
 import sys
 import os
 import time
 import logging
+from typing import Dict, Union
 from datetime import datetime, timedelta
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
 import numpy as np
 import pandas as pd
-from typing import Dict, Union
 
 SECONDS_PER_DAY = 60 * 60 * 24
 ONE_DAY = timedelta(days=1)
@@ -202,7 +197,7 @@ def pv_output_api_query(service: str,
             raise
 
 
-def pv_system_search(query: str, lat_lon: str, **kwargs) -> pd.DataFrame:
+def pv_system_search(query: str, lat_lon: str = '', **kwargs) -> pd.DataFrame:
     """Send a search query to PVOutput.org.
 
     Some quirks of the PVOutput.org API:
