@@ -1,0 +1,5 @@
+dist: xenial   # required for Python >= 3.7
+language: python
+python: 3.7
+install: pip install -e git+https://github.com/openclimatefix/pvoutput_downloader#egg=pvoutput
+script: py.test
