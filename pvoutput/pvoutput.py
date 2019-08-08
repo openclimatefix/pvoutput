@@ -2,15 +2,6 @@
 
 ## How to setup this notebook
 
-1. Register with PVOutput.org
-      As well as an API key, you *need* a SystemId to use the API.
-      If you don't include a SystemId, then you'll get a "401 Unauthorized"
-      response from the PVOutput.org API.  If you don't have a PV system, click
-      the "energy consumption only" box when setting a system id on PVOutput.
-
-2. Set the environment variables PVOUTPUT_APIKEY and PVOUTPUT_SYSTEMID
-      (on Linux, put `EXPORT PVOUTPUT_APIKEY="API KEY"` etc. into `.profile`,
-      log out, and log back in again)
 """
 from io import StringIO
 import sys
