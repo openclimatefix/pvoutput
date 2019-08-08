@@ -1,5 +1,6 @@
-Download historical solar photovoltaic data from [PVOutput.org](https://pvoutput.org).
+[![Build Status](https://api.travis-ci.com/openclimatefix/pvoutput_downloader.svg)](https://travis-ci.com/openclimatefix/pvoutput_downloader/)
 
+Download historical solar photovoltaic data from [PVOutput.org](https://pvoutput.org).
 
 This code is a work-in-progress.  The aim is to provide both a Python library for interacting with [PVOutput.org's API](https://pvoutput.org/help.html#api), and a set of scripts for downloading lots of data :)
 
