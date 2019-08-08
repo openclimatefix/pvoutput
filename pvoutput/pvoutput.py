@@ -38,7 +38,7 @@ def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log'
     return logger
 
 
-_logger = get_logger()
+_logger = logging.getLogger(__name__)
 
 
 class BadStatusCode(Exception):
