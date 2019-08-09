@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pytest',
-        'yaml',
+        'pyyaml',
         'tables',
         'pandas',
         'matplotlib',
