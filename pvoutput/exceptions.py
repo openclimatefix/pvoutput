@@ -8,9 +8,9 @@ class BadStatusCode(Exception):
 
     def __str__(self) -> str:
         string = super(BadStatusCode, self).__str__()
-        string += "Status code: {}\n".format(self.response.status_code)
-        string += "Response content: {}\n".format(self.response.content)
-        string += "Response headers: {}".format(self.response.headers)
+        string += "Status code: {}; ".format(self.response.status_code)
+        string += "Response content: {}; ".format(self.response.content)
+        string += "Response headers: {}; ".format(self.response.headers)
         return string
 
 

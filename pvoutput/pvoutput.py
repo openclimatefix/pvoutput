@@ -444,13 +444,12 @@ class PVOutput:
                 "  Rate limit will be reset at {}".format(
                     self.rate_limit_reset_time))
             _LOG.info(msg)
-            print(msg)
             if wait_if_rate_limit_exceeded:
                 self.wait_for_rate_limit_reset()
                 return self._api_query(
                     service, api_params, wait_if_rate_limit_exceeded=False)
 
-            raise
+            raise RateLimitExceeded(response, msg)
 
     def wait_for_rate_limit_reset(self):
         utc_now = pd.Timestamp.utcnow()
