@@ -292,6 +292,9 @@ def get_pv_system_status(pv_system_id: int,
                          ) -> pd.DataFrame:
     """Get PV system status (e.g. instantaneous power generation) for one day.
 
+    The returned DataFrame will be empty if the PVOutput API
+    returns 'status 400: No status found'.
+
     Args:
         pv_system_id: int
         date: str, YYYYMMDD
@@ -321,10 +324,13 @@ def get_pv_system_status(pv_system_id: int,
         'sid1': pv_system_id  # SystemID.
     }
 
-    pv_system_status_text = pv_output_api_query(
-        service='getstatus',
-        api_params=api_params,
-        **kwargs)
+    try:
+        pv_system_status_text = pv_output_api_query(
+            service='getstatus', api_params=api_params, **kwargs)
+    except NoStatusFound:
+        _LOG.info(
+            'system_id %d: No status found for date %s', pv_system_id, date)
+        pv_system_status_text = ""
 
     columns = [
         'energy_generation_watt_hours',
