@@ -29,4 +29,4 @@ system_id: <SystemID from PVOutput.org>
 
 # Usage
 
-See the [Quick Start notebook](master/examples/quick_start.ipynb).
+See the [Quick Start notebook](examples/quick_start.ipynb).
