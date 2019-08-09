@@ -38,7 +38,7 @@ def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log'
     return logger
 
 
-_logger = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
 class BadStatusCode(Exception):
@@ -122,7 +122,7 @@ def _get_api_reponse(service: str, api_params: Dict) -> requests.Response:
     session = _get_session_with_retry()
     response = session.get(api_url, headers=headers)
 
-    _logger.debug(
+    _LOG.debug(
         'response: status_code=%d; headers=%s',
         response.status_code, response.headers)
     return response
@@ -146,7 +146,7 @@ def _process_api_response(response: requests.Response) -> str:
         content = response.content.decode('latin1').strip()
     except UnicodeDecodeError as e:
         msg = "Error decoding this string: {}\n{}".format(response.content, e)
-        _logger.exception(msg)
+        _LOG.exception(msg)
         raise
 
     if response.status_code == 400:
@@ -154,7 +154,7 @@ def _process_api_response(response: requests.Response) -> str:
 
     # Did we overshoot our quota?
     rate_limit_remaining = int(response.headers['X-Rate-Limit-Remaining'])
-    _logger.debug('Remaining API requests: %d', rate_limit_remaining)
+    _LOG.debug('Remaining API requests: %d', rate_limit_remaining)
     if response.status_code == 403 and rate_limit_remaining <= 0:
         raise RateLimitExceeded(response=response)
 
@@ -182,19 +182,19 @@ def pv_output_api_query(service: str,
     try:
         response = _get_api_reponse(service, api_params)
     except Exception as e:
-        _logger.exception(e)
+        _LOG.exception(e)
         raise
 
     try:
         return _process_api_response(response)
     except RateLimitExceeded as e:
         if wait_if_rate_limit_exceeded:
-            _logger.info(e.wait_message())
+            _LOG.info(e.wait_message())
             time.sleep(e.secs_to_wait)
             return pv_output_api_query(
                 service, api_params, wait_if_rate_limit_exceeded=False)
-        else:
-            raise
+
+        raise
 
 
 def pv_system_search(query: str,
@@ -269,8 +269,7 @@ def date_to_pvoutput_str(date: Union[str, datetime]) -> str:
     """Convert datetime to date string for PVOutput.org in YYYYMMDD format."""
     if isinstance(date, str):
         return date
-    else:
-        return date.strftime(PV_OUTPUT_DATE_FORMAT)
+    return date.strftime(PV_OUTPUT_DATE_FORMAT)
 
 
 def _check_date(date: str):
@@ -314,15 +313,17 @@ def get_pv_system_status(pv_system_id: int,
     date = date_to_pvoutput_str(date)
     _check_date(date)
 
+    api_params = {
+        'd': date,  # date, YYYYMMDD.
+        'h': 1,  # We want historical data.
+        'limit': 288,  # API limit is 288 (num of 5-min periods per day).
+        'ext': 0,  # Extended data; we don't want extended data.
+        'sid1': pv_system_id  # SystemID.
+    }
+
     pv_system_status_text = pv_output_api_query(
         service='getstatus',
-        api_params={
-            'd': date,  # date, YYYYMMDD.
-            'h': 1,  # We want historical data.
-            'limit': 288,  # API limit is 288 (num of 5-min periods per day).
-            'ext': 0,  # Extended data; we don't want extended data.
-            'sid1': pv_system_id  # SystemID.
-        },
+        api_params=api_params,
         **kwargs)
 
     columns = [
@@ -362,14 +363,14 @@ def check_pv_system_status(pv_system_status: pd.DataFrame,
     if not isinstance(pv_system_status, pd.DataFrame):
         raise ValueError('pv_system_status must be a dataframe')
     requested_date = datetime.strptime(requested_date_str, "%Y%m%d").date()
-    if len(pv_system_status) > 0:
+    if not pv_system_status.empty:
         index = pv_system_status.index
         for d in [index[0], index[-1]]:
-            if not (requested_date <= d.date() <= requested_date + ONE_DAY):
+            if not requested_date <= d.date() <= requested_date + ONE_DAY:
                 raise ValueError(
-                      'A date in the index is outside the expected range.'
-                      ' Date from index={}, requested_date={}'
-                      .format(d, requested_date_str))
+                    'A date in the index is outside the expected range.'
+                    ' Date from index={}, requested_date={}'
+                    .format(d, requested_date_str))
 
 
 def get_pv_metadata(pv_system_id: int, **kwargs) -> pd.Series:

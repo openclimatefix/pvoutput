@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 import pandas as pd
 from pvoutput import pvoutput
 
@@ -21,7 +22,8 @@ def test_check_date():
 def test_check_pv_system_status():
     def _make_timeseries(start, end):
         index = pd.date_range(start, end, freq="5T")
-        timeseries = pd.DataFrame(None, index=index)
+        n = len(index)
+        timeseries = pd.DataFrame(np.zeros(n), index=index)
         return timeseries
 
     good_timeseries = _make_timeseries("2019-01-01 00:00", "2019-01-02 00:00")
