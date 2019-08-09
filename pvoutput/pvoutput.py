@@ -1,5 +1,4 @@
 from io import StringIO
-import os
 import time
 import logging
 from typing import Dict, Union, Optional
@@ -7,28 +6,14 @@ from datetime import datetime, timedelta
 import requests
 import numpy as np
 import pandas as pd
-import yaml
 
 from .exceptions import NoStatusFound, RateLimitExceeded
-from .utils import _get_session_with_retry
+from .utils import _get_session_with_retry, _get_param_from_config_file
+from .consts import ONE_DAY, PV_OUTPUT_DATE_FORMAT
+from .consts import CONFIG_FILENAME, RATE_LIMIT_PARAMS_TO_API_HEADERS
 
-SECONDS_PER_DAY = 60 * 60 * 24
-ONE_DAY = timedelta(days=1)
-
-PV_OUTPUT_DATE_FORMAT = "%Y%m%d"
-CONFIG_FILENAME = os.path.expanduser("~/.pvoutput.yml")
-RATE_LIMIT_PARAMS_TO_API_HEADERS = {
-    'rate_limit_remaining': 'X-Rate-Limit-Remaining',
-    'rate_limit_total': 'X-Rate-Limit-Limit',
-    'rate_limit_reset_time': 'X-Rate-Limit-Reset'}
 
 _LOG = logging.getLogger('pvoutput')
-
-
-def _get_param_from_config_file(config_filename, param_name):
-    with open(config_filename, mode='r') as fh:
-        config_data = yaml.load(fh, Loader=yaml.Loader)
-    return config_data[param_name]
 
 
 class PVOutput:
@@ -56,7 +41,7 @@ class PVOutput:
             if getattr(self, param_name) is None:
                 try:
                     param_value_from_config = _get_param_from_config_file(
-                        config_filename, param_name)
+                        param_name, config_filename)
                 except Exception as e:
                     msg = (
                         'Error loading configuration parameter {param_name}'

@@ -3,12 +3,28 @@ import sys
 import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
+import yaml
+from .consts import CONFIG_FILENAME
 
 
-def get_logger(filename='/home/jack/data/pvoutput.org/logs/UK_PV_timeseries.log',
+def _get_param_from_config_file(param_name, config_filename=CONFIG_FILENAME):
+    with open(config_filename, mode='r') as fh:
+        config_data = yaml.load(fh, Loader=yaml.Loader)
+    try:
+        value = config_data[param_name]
+    except KeyError as e:
+        print("Config file", config_filename, "does not contain a", param_name,
+              "parameter.", e)
+        raise
+    return value
+
+
+def get_logger(filename=None,
                mode='a',
                level=logging.DEBUG,
                stream_handler=False):
+    if filename is None:
+        filename = _get_param_from_config_file('log_filename')
     logger = logging.getLogger('pvoutput')
     logger.setLevel(level)
     logger.handlers = [logging.FileHandler(filename=filename, mode=mode)]
