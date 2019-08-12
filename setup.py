@@ -6,11 +6,14 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pytest',
+        'pytypes',
         'pyyaml',
         'tables',
         'pandas',
         'matplotlib',
         'jupyter',
         'urllib3',
-        'requests']
+        'requests',
+        'beautifulsoup4'
+    ]
 )

@@ -7,10 +7,10 @@ import requests
 import numpy as np
 import pandas as pd
 
-from .exceptions import NoStatusFound, RateLimitExceeded
-from .utils import _get_session_with_retry, _get_param_from_config_file
-from .consts import ONE_DAY, PV_OUTPUT_DATE_FORMAT
-from .consts import CONFIG_FILENAME, RATE_LIMIT_PARAMS_TO_API_HEADERS
+from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
+from pvoutput.utils import _get_session_with_retry, _get_param_from_config_file
+from pvoutput.consts import ONE_DAY, PV_OUTPUT_DATE_FORMAT
+from pvoutput.consts import CONFIG_FILENAME, RATE_LIMIT_PARAMS_TO_API_HEADERS
 
 
 _LOG = logging.getLogger('pvoutput')
@@ -145,11 +145,11 @@ class PVOutput:
             pd.DataFrame:
                 index: datetime (DatetimeIndex, localtime of the PV system)
                 columns:  (all np.float64):
-                    energy_generation_Wh,
+                    cumulative_energy_gen_Wh,
                     energy_efficiency_kWh_per_kW,
-                    power_generation_W,
-                    average_power_W,
-                    power_generation_normalised,
+                    instantaneous_power_gen_W,
+                    average_power_gen_W,
+                    power_gen_normalised,
                     energy_consumption_Wh,
                     power_demand_W,
                     temperature_C,
@@ -176,11 +176,11 @@ class PVOutput:
             pv_system_status_text = ""
 
         columns = [
-            'energy_generation_Wh',
+            'cumulative_energy_gen_Wh',
             'energy_efficiency_kWh_per_kW',
-            'power_generation_W',
-            'average_power_W',
-            'power_generation_normalised',
+            'instantaneous_power_gen_W',
+            'average_power_gen_W',
+            'power_gen_normalised',
             'energy_consumption_Wh',
             'power_demand_W',
             'temperature_C',
@@ -279,13 +279,13 @@ class PVOutput:
 
         Returns:
             pd.Series with index:
-                energy_generated_Wh,
+                total_energy_gen_Wh,
                 energy_exported_Wh,
-                average_generation_Wh_per_day,
-                minimum_generation_Wh,
-                maximum_generation_Wh,
+                average_daily_energy_gen_Wh,
+                minimum_daily_energy_gen_Wh,
+                maximum_daily_energy_gen_Wh,
                 average_efficiency_kWh_per_kW,
-                num_outputs,  # Total number of data outputs.
+                num_outputs,
                 actual_date_from,
                 actual_date_to,
                 record_efficiency_kWh_per_kW,
@@ -305,11 +305,11 @@ class PVOutput:
         pv_metadata = pd.read_csv(
             StringIO(pv_metadata_text),
             names=[
-                'energy_generated_Wh',
+                'total_energy_gen_Wh',
                 'energy_exported_Wh',
-                'average_generation_Wh_per_day',
-                'minimum_generation_Wh',
-                'maximum_generation_Wh',
+                'average_daily_energy_gen_Wh',
+                'minimum_daily_energy_gen_Wh',
+                'maximum_daily_energy_gen_Wh',
                 'average_efficiency_kWh_per_kW',
                 'num_outputs',
                 'actual_date_from',
