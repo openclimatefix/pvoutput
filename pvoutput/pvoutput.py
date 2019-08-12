@@ -281,11 +281,11 @@ class PVOutput:
             pd.Series with index:
                 energy_generated_Wh,
                 energy_exported_Wh,
-                average_generation_Wh,
+                average_generation_Wh_per_day,
                 minimum_generation_Wh,
                 maximum_generation_Wh,
                 average_efficiency_kWh_per_kW,
-                outputs,  # Total number of data outputs recorded by PVOutput.
+                num_outputs,  # Total number of data outputs.
                 actual_date_from,
                 actual_date_to,
                 record_efficiency_kWh_per_kW,
@@ -307,11 +307,11 @@ class PVOutput:
             names=[
                 'energy_generated_Wh',
                 'energy_exported_Wh',
-                'average_generation_Wh',
+                'average_generation_Wh_per_day',
                 'minimum_generation_Wh',
                 'maximum_generation_Wh',
                 'average_efficiency_kWh_per_kW',
-                'outputs',
+                'num_outputs',
                 'actual_date_from',
                 'actual_date_to',
                 'record_efficiency_kWh_per_kW',
