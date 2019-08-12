@@ -87,7 +87,7 @@ class PVOutput:
             pd.DataFrame, one row per search results.  Index is PV system ID.
                 Columns:
                     name,
-                    capacity_W,
+                    system_AC_capacity_W,
                     address,  # If `include_country` is True then address is
                               # 'country> <postcode>',
                               # else address is '<postcode>'.
@@ -112,7 +112,7 @@ class PVOutput:
             StringIO(pv_systems_text),
             names=[
                 'name',
-                'capacity_W',
+                'system_AC_capacity_W',
                 'address',
                 'orientation',
                 'num_outputs',
@@ -210,13 +210,13 @@ class PVOutput:
         Returns:
             pd.Series.  Index is:
                 name,
-                capacity_W,
+                system_AC_capacity_W,
                 address,
-                number_of_panels,
-                panel_power_W,
+                num_panels,
+                panel_capacity_W_each,
                 panel_brand,
                 num_inverters,
-                inverter_power_W,
+                inverter_capacity_W,
                 inverter_brand,
                 orientation,
                 array_tilt_degrees,
@@ -225,8 +225,8 @@ class PVOutput:
                 latitude,
                 longitude,
                 status_interval_minutes,
-                secondary_number_of_panels,
-                secondary_panel_power_W,
+                secondary_num_panels,
+                secondary_panel_capacity_W_each,
                 secondary_orientation,
                 secondary_array_tilt_degrees
         """
@@ -248,13 +248,13 @@ class PVOutput:
             lineterminator=';',
             names=[
                 'name',
-                'capacity_W',
+                'system_AC_capacity_W',
                 'address',
-                'number_of_panels',
-                'panel_power_W',
+                'num_panels',
+                'panel_capacity_W_each',
                 'panel_brand',
                 'num_inverters',
-                'inverter_power_W',
+                'inverter_capacity_W',
                 'inverter_brand',
                 'orientation',
                 'array_tilt_degrees',
@@ -263,8 +263,8 @@ class PVOutput:
                 'latitude',
                 'longitude',
                 'status_interval_minutes',
-                'secondary_number_of_panels',
-                'secondary_panel_power_W',
+                'secondary_num_panels',
+                'secondary_panel_capacity_W_each',
                 'secondary_orientation',
                 'secondary_array_tilt_degrees'
             ],
