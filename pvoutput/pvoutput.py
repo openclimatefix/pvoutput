@@ -175,6 +175,10 @@ class PVOutput:
                 pv_system_id, date)
             pv_system_status_text = ""
 
+        # See https://pvoutput.org/help.html#api-getstatus but make sure
+        # you read the 'History Query' subsection, as a historical query
+        # has slightly different return columns compared to a non-historical
+        # query!
         columns = [
             'cumulative_energy_gen_Wh',
             'energy_efficiency_kWh_per_kW',
