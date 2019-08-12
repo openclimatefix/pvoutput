@@ -86,9 +86,11 @@ class PVOutput:
         Returns:
             pd.DataFrame, one row per search results.  Index is PV system ID.
                 Columns:
-                    system_name,
-                    system_size_watts,
-                    postcode,  # including the country
+                    name,
+                    capacity_W,
+                    address,  # If `include_country` is True then address is
+                              # 'country> <postcode>',
+                              # else address is '<postcode>'.
                     orientation,
                     num_outputs,
                     last_output,
@@ -109,9 +111,9 @@ class PVOutput:
         pv_systems = pd.read_csv(
             StringIO(pv_systems_text),
             names=[
-                'system_name',
-                'system_size_watts',
-                'postcode',
+                'name',
+                'capacity_W',
+                'address',
                 'orientation',
                 'num_outputs',
                 'last_output',
@@ -143,14 +145,14 @@ class PVOutput:
             pd.DataFrame:
                 index: datetime (DatetimeIndex, localtime of the PV system)
                 columns:  (all np.float64):
-                    energy_generation_watt_hours,
+                    energy_generation_Wh,
                     energy_efficiency_kWh_per_kW,
-                    inst_power_watt,
-                    average_power_watt,
-                    normalised_output,
-                    energy_consumption_watt_hours,
-                    power_consumption_watts,
-                    temperature_celsius,
+                    power_generation_W,
+                    average_power_W,
+                    power_generation_normalised,
+                    energy_consumption_Wh,
+                    power_demand_W,
+                    temperature_C,
                     voltage
         """
         date = date_to_pvoutput_str(date)
@@ -174,14 +176,14 @@ class PVOutput:
             pv_system_status_text = ""
 
         columns = [
-            'energy_generation_watt_hours',
+            'energy_generation_Wh',
             'energy_efficiency_kWh_per_kW',
-            'inst_power_watt',
-            'average_power_watt',
-            'normalised_output',
-            'energy_consumption_watt_hours',
-            'power_consumption_watts',
-            'temperature_celsius',
+            'power_generation_W',
+            'average_power_W',
+            'power_generation_normalised',
+            'energy_consumption_Wh',
+            'power_demand_W',
+            'temperature_C',
             'voltage']
 
         pv_system_status = pd.read_csv(
@@ -203,15 +205,14 @@ class PVOutput:
 
         Returns:
             pd.Series.  Index is:
-                system_name,
-                system_id,
-                system_size_watts,
-                postcode,
+                name,
+                capacity_W,
+                address,
                 number_of_panels,
-                panel_power_watts,
+                panel_power_W,
                 panel_brand,
                 num_inverters,
-                inverter_power_watts,
+                inverter_power_W,
                 inverter_brand,
                 orientation,
                 array_tilt_degrees,
@@ -220,10 +221,10 @@ class PVOutput:
                 latitude,
                 longitude,
                 status_interval_minutes,
-                number_of_panels_secondary,
-                panel_power_watts_secondary,
-                orientation_secondary,
-                array_tilt_degrees_secondary
+                secondary_number_of_panels,
+                secondary_panel_power_W,
+                secondary_orientation,
+                secondary_array_tilt_degrees
         """
         pv_metadata_text = self._api_query(
             service='getsystem',
@@ -242,14 +243,14 @@ class PVOutput:
             StringIO(pv_metadata_text),
             lineterminator=';',
             names=[
-                'system_name',
-                'system_size_watts',
-                'postcode',
+                'name',
+                'capacity_W',
+                'address',
                 'number_of_panels',
-                'panel_power_watts',
+                'panel_power_W',
                 'panel_brand',
                 'num_inverters',
-                'inverter_power_watts',
+                'inverter_power_W',
                 'inverter_brand',
                 'orientation',
                 'array_tilt_degrees',
@@ -258,10 +259,10 @@ class PVOutput:
                 'latitude',
                 'longitude',
                 'status_interval_minutes',
-                'number_of_panels_secondary',
-                'panel_power_watts_secondary',
-                'orientation_secondary',
-                'array_tilt_degrees_secondary'
+                'secondary_number_of_panels',
+                'secondary_panel_power_W',
+                'secondary_orientation',
+                'secondary_array_tilt_degrees'
             ],
             parse_dates=['install_date'],
             nrows=1
