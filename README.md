@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.com/openclimatefix/pvoutput_downloader.svg)](https://travis-ci.com/openclimatefix/pvoutput_downloader/)
+[![Build Status](https://api.travis-ci.com/openclimatefix/pvoutput.svg)](https://travis-ci.com/openclimatefix/pvoutput/)
 
 Download historical solar photovoltaic data from [PVOutput.org](https://pvoutput.org).
 
@@ -24,7 +24,7 @@ system_id: <SystemID from PVOutput.org>
 
 ## Install pvoutput Python library
 
-`pip install -e git+https://github.com/openclimatefix/pvoutput_downloader#egg=pvoutput`
+`pip install -e git+https://github.com/openclimatefix/pvoutput#egg=pvoutput`
 
 
 # Usage
