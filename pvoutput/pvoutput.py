@@ -449,6 +449,7 @@ class PVOutput:
                 "  Rate limit will be reset at {}".format(
                     self.rate_limit_reset_time))
             _LOG.info(msg)
+            print(msg)
             if wait_if_rate_limit_exceeded:
                 self.wait_for_rate_limit_reset()
                 return self._api_query(
