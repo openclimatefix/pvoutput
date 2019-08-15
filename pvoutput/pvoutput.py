@@ -139,7 +139,7 @@ class PVOutput:
 
         Args:
             pv_system_id: int
-            date: str, YYYYMMDD
+            date: str, YYYYMMDD (localtime of the PV system)
 
         Returns:
             pd.DataFrame:
@@ -159,7 +159,7 @@ class PVOutput:
         _check_date(date)
 
         api_params = {
-            'd': date,  # date, YYYYMMDD.
+            'd': date,  # date, YYYYMMDD, localtime of the PV system
             'h': 1,  # We want historical data.
             'limit': 288,  # API limit is 288 (num of 5-min periods per day).
             'ext': 0,  # Extended data; we don't want extended data.
@@ -282,7 +282,7 @@ class PVOutput:
             pv_system_id: int
 
         Returns:
-            pd.Series with index:
+            pd.Series:
                 total_energy_gen_Wh,
                 energy_exported_Wh,
                 average_daily_energy_gen_Wh,
