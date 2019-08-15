@@ -15,7 +15,7 @@ Columns:
 ### `timeseries/<pv_system_id>` tables
 
 Columns:
-- `datetime`: index column, pd.DatetimeIndex, localtime to the PV system
+- `datetime`: index column, pd.DatetimeIndex, [localtime to the PV system](https://forum.pvoutput.org/t/clarification-are-date-times-in-local-or-utc/570/2).
 - `datetime_of_API_request_UTC`: The datetime at which we sent the API request.  Will be `NaT` for data retrieved before about 2019-08-06 13:00 UTC.
 - `query_date`: The date (in localtime to the PV system) used in the query to the PVOutput.org API.  Will be `NaT` for data retrieved before about 2019-08-06 13:00 UTC.
 - ... other columns contain data from PVOutput.org
