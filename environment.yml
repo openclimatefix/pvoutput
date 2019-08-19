@@ -1,0 +1,14 @@
+name: pvoutput
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.7
+  - pytest
+  - pyyaml
+  - pytables
+  - pandas
+  - matplotlib
+  - jupyter
+  - urllib3
+  - requests
+  - beautifulsoup4
