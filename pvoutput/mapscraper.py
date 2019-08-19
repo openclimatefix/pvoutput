@@ -1,6 +1,5 @@
 import re
 from typing import Optional, Union, Iterable
-from pytypes import typechecked
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -11,7 +10,6 @@ from pvoutput.consts import PV_OUTPUT_MAP_COLUMN_NAMES
 _MAX_NUM_PAGES = 1024
 
 
-@typechecked
 def get_pv_systems_for_country(
         country: Union[str, int],
         ascending: Optional[bool] = None,
@@ -66,7 +64,6 @@ def get_pv_systems_for_country(
 
 ############ LOAD HTML ###################
 
-@typechecked
 def _create_map_url(
         country_code: Optional[int] = None,
         page_number: Optional[int] = None,
@@ -124,7 +121,6 @@ def _raise_country_error(country, msg=''):
             ', '.join(PV_OUTPUT_COUNTRY_CODES.keys())))
 
 
-@typechecked
 def _check_country_code(country_code: Union[None, int]):
     if country_code is None:
         return
@@ -133,7 +129,6 @@ def _check_country_code(country_code: Union[None, int]):
         _raise_country_error(country_code, 'country outside of valid range!  ')
 
 
-@typechecked
 def _convert_to_country_code(country: Union[str, int]) -> int:
     if isinstance(country, str):
         try:
@@ -146,7 +141,6 @@ def _convert_to_country_code(country: Union[str, int]) -> int:
         return country
 
 
-@typechecked
 def _page_has_next_link(soup: BeautifulSoup):
     return bool(soup.find_all('a', text='Next'))
 
@@ -171,7 +165,6 @@ def _process_metadata(soup: BeautifulSoup) -> pd.DataFrame:
     return df
 
 
-@typechecked
 def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
     pv_system_size_col = soup.find_all(
         'a', href=re.compile('display\.jsp\?sid='))
@@ -232,14 +225,12 @@ def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
     return df
 
 
-@typechecked
 def _remove_str_and_convert_to_numeric(
         series: pd.Series, string_to_remove: str) -> pd.Series:
     series = series.str.replace(string_to_remove, '')
     return pd.to_numeric(series)
 
 
-@typechecked
 def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
     for col_name, string_to_remove in [
             ('array_tilt_degrees', '°'),
@@ -251,7 +242,6 @@ def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@typechecked
 def _process_output_col(
         soup: BeautifulSoup,
         index: Optional[Iterable] = None) -> pd.Series:
@@ -260,7 +250,6 @@ def _process_output_col(
     return pd.to_timedelta(duration)
 
 
-@typechecked
 def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:
     data = []
     for unit, multiplier in [('kWh', 1E3), ('MWh', 1E6)]:
@@ -272,7 +261,6 @@ def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:
     return pd.concat(data)
 
 
-@typechecked
 def _process_generation_and_average_cols(
         soup: BeautifulSoup,
         index: Optional[Iterable] = None) -> pd.DataFrame:
@@ -292,7 +280,6 @@ def _process_generation_and_average_cols(
     return df
 
 
-@typechecked
 def _process_efficiency_col(
         soup: BeautifulSoup,
         index: Optional[Iterable] = None) -> pd.Series:

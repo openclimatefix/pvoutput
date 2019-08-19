@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from pvoutput import mapscraper as ms
 from pvoutput.consts import MAP_URL
-from pytypes import InputTypeError
 
 
 def test_convert_to_country_code():
@@ -17,7 +16,6 @@ def test_convert_to_country_code():
                             .format(exception.__name__, bad_country))
 
     _assert_raises([-1, -100, 1000, 'blah'], ValueError)
-    _assert_raises([1.5, np.inf, np.NaN], InputTypeError)
 
 
 def test_create_map_url():
