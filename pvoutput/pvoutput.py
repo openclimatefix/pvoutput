@@ -233,7 +233,7 @@ class PVOutput:
 
     def get_batch_status(self,
                          pv_system_id: int,
-                         date_to: Union[str, datetime],
+                         date_to: Optional[Union[str, datetime]] = None,
                          max_retries: Optional[int] = 1000,
                          **kwargs
                          ) -> Union[None, pd.DataFrame]:
@@ -267,13 +267,12 @@ class PVOutput:
                     temperature_C,
                     voltage
         """
-        date_to = date_to_pvoutput_str(date_to)
-        _check_date(date_to)
+        api_params = {'sid1': pv_system_id}
 
-        api_params = {
-            'dt': date_to,  # date to, YYYYMMDD, localtime of the PV system
-            'sid1': pv_system_id  # SystemID.
-        }
+        if date_to is not None:
+            date_to = date_to_pvoutput_str(date_to)
+            _check_date(date_to)
+            api_params['dt'] = date_to
 
         for retry in range(max_retries):
             try:
@@ -288,7 +287,8 @@ class PVOutput:
                 break
 
             if 'Accepted 202' in pv_system_status_text:
-                _print_and_log('Request accepted.')
+                if retry == 0:
+                    _print_and_log('Request accepted.')
                 if retry < max_retries - 1:
                     _print_and_log('Sleeping for 1 minute.')
                     time.sleep(60)
@@ -460,10 +460,11 @@ class PVOutput:
         try:
             return self._process_api_response(response)
         except RateLimitExceeded:
-            _print_and_log(
+            msg = (
                 "PVOutput.org API rate limit exceeded!"
                 "  Rate limit will be reset at {}".format(
                     self.rate_limit_reset_time))
+            _print_and_log(msg)
             if wait_if_rate_limit_exceeded:
                 self.wait_for_rate_limit_reset()
                 return self._api_query(
