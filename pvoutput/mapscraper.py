@@ -1,5 +1,6 @@
 import re
 from typing import Optional, Union, Iterable
+from copy import copy
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -18,7 +19,7 @@ def get_pv_systems_for_country(
         ) -> pd.DataFrame:
     """
     Args:
-        country: either a string such as 'United Kingdom' 
+        country: either a string such as 'United Kingdom'
             (see consts.PV_OUTPUT_COUNTRY_CODES for all recognised strings),
             or a PVOutput.org country code, in the range [1, 257].
         ascending: if True, ask PVOutput.org to sort results by ascending.
@@ -103,7 +104,7 @@ def _create_map_url(
         '{}={}'.format(key, value) for key, value in url_params.items()
         if value is not None]
     query_string = '&'.join(url_params_list)
-    url = MAP_URL
+    url = copy(MAP_URL)
     if query_string:
         url += '?' + query_string
     return url

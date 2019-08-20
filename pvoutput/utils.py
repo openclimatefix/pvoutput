@@ -1,10 +1,14 @@
 import logging
 import sys
+from typing import Dict
 import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import yaml
-from .consts import CONFIG_FILENAME
+from pvoutput.consts import CONFIG_FILENAME
+
+
+_LOG = logging.getLogger('pvoutput')
 
 
 def _get_param_from_config_file(param_name, config_filename=CONFIG_FILENAME):
@@ -61,3 +65,23 @@ def _get_session_with_retry() -> requests.Session:
     )
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
+
+
+def _get_response(
+        api_url: str,
+        api_params: Dict,
+        headers: Dict) -> requests.Response:
+    api_params_str = '&'.join(
+        ['{}={}'.format(key, value) for key, value in api_params.items()])
+    full_api_url = '{}?{}'.format(api_url, api_params_str)
+    session = _get_session_with_retry()
+    response = session.get(full_api_url, headers=headers)
+    _LOG.debug(
+        'response: status_code=%d; headers=%s',
+        response.status_code, response.headers)
+    return response
+
+
+def _print_and_log(msg, level=logging.INFO):
+    _LOG.log(level, msg)
+    print(msg)
