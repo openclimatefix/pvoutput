@@ -615,7 +615,7 @@ class PVOutput:
 
         if data_availability < min_data_availability:
             _LOG.info(
-                'system_id %d: Data availability too low!  Only %.0f %.',
+                'system_id %d: Data availability too low!  Only %.0f %%.',
                 system_id, data_availability * 100)
             return []
 
