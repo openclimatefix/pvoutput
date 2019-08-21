@@ -396,7 +396,7 @@ class PVOutput:
                 minimum_daily_energy_gen_Wh,
                 maximum_daily_energy_gen_Wh,
                 average_efficiency_kWh_per_kW,
-                num_outputs,
+                num_outputs,  # The number of days for which there's >= 1 val.
                 actual_date_from,
                 actual_date_to,
                 record_efficiency_kWh_per_kW,
@@ -484,8 +484,7 @@ class PVOutput:
             date_to = pd.Timestamp(date_to).date()
 
         def _get_fresh_statistic():
-            _print_and_log(
-                'Getting fresh statistic for {}'.format(pv_system_id))
+            _LOG.info('pv_system %d: Getting fresh statistic.', pv_system_id)
             stats = self.get_statistic(pv_system_id, **kwargs)
             with pd.HDFStore(store_filename, mode='a') as store:
                 try:
@@ -525,7 +524,7 @@ class PVOutput:
                        end_date: datetime,
                        output_filename: str,
                        timezone: Optional[str] = None,
-                       min_num_outputs_per_day: Optional[int] = 30
+                       min_data_availability: Optional[float] = 0.5
                        ):
         """
         Args:
@@ -535,11 +534,17 @@ class PVOutput:
             output_filename: HDF5 filename to write data to.
             timezone: String representation of timezone of timeseries data.
                 e.g. 'Europe/London'.
+            min_data_availability: A float in the range [0, 1].  1 means only
+                accept PV systems which have no days of missing data.  0 means
+                accept all PV systems, no matter if they have missing data.
         """
         n = len(system_ids)
         for i, pv_system_id in enumerate(system_ids):
             _LOG.info('**********************')
-            _LOG.info('system_id %d: %d of %d', pv_system_id, i, n)
+            msg = 'system_id {:d}: {:d} of {:d} ({:%})'.format(
+                pv_system_id, i, n, i/n)
+            _LOG.info(msg)
+            print('\r', msg, end='', flush=True)
 
             # Sorted list of DateRange objects.  For each DateRange,
             # we need to download from start_date to end_date inclusive.
@@ -551,8 +556,7 @@ class PVOutput:
                 output_filename,
                 pv_system_id,
                 date_ranges_to_download,
-                min_num_outputs_per_day
-            )
+                min_data_availability)
 
             if not date_ranges_to_download:
                 _LOG.info(
@@ -576,9 +580,17 @@ class PVOutput:
                            store_filename: str,
                            system_id: int,
                            date_ranges: Iterable[DateRange],
-                           min_num_outputs_per_day: Optional[int] = 30
+                           min_data_availability: Optional[float] = 0.5
                            ) -> List[DateRange]:
         """Check getstatistic to see if system_id has data for all date ranges.
+
+        Args:
+            system_id: PV system ID.
+            store_filename: HDF5 filename to cache statistics to / from.
+            date_ranges: List of DateRange objects.
+            min_data_availability: A float in the range [0, 1].  1 means only
+                accept PV systems which have no days of missing data.  0 means
+                accept all PV systems, no matter if they have missing data.
         """
         if not date_ranges:
             return date_ranges
@@ -598,13 +610,13 @@ class PVOutput:
         timeseries_date_range = DateRange(
             stats['actual_date_from'], stats['actual_date_to'])
 
-        outputs_per_day = (
-            stats['num_outputs'] / timeseries_date_range.total_days())
+        data_availability = (
+            stats['num_outputs'] / (timeseries_date_range.total_days() + 1))
 
-        if outputs_per_day < min_num_outputs_per_day:
+        if data_availability < min_data_availability:
             _LOG.info(
-                'system_id %d: Too few outputs per day!  Only %f per day.',
-                system_id, outputs_per_day)
+                'system_id %d: Data availability too low!  Only %.0f %.',
+                system_id, data_availability * 100)
             return []
 
         new_date_ranges = []
@@ -860,19 +872,18 @@ def _set_date_param(dt, api_params, key):
 
 
 def check_pv_system_status(pv_system_status: pd.DataFrame,
-                           requested_date_str: str):
+                           requested_date: date):
     """Checks the DataFrame returned by get_pv_system_status.
 
     Args:
         pv_system_status: DataFrame returned by get_pv_system_status
-        requested_date_str: Date string in YYYYMMDD format.
+        requested_date: date.
 
     Raises:
         ValueError if the DataFrame is incorrect.
     """
     if not isinstance(pv_system_status, pd.DataFrame):
         raise ValueError('pv_system_status must be a dataframe')
-    requested_date = datetime.strptime(requested_date_str, "%Y%m%d").date()
     if not pv_system_status.empty:
         index = pv_system_status.index
         for d in [index[0], index[-1]]:
@@ -880,7 +891,7 @@ def check_pv_system_status(pv_system_status: pd.DataFrame,
                 raise ValueError(
                     'A date in the index is outside the expected range.'
                     ' Date from index={}, requested_date={}'
-                    .format(d, requested_date_str))
+                    .format(d, requested_date))
 
 
 def _process_batch_status(pv_system_status_text):

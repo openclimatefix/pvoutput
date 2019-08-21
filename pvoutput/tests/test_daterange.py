@@ -36,3 +36,7 @@ def test_intersection():
     assert DateRange("2019-01-01", "2019-01-10").intersection(
         DateRange("2019-01-05", "2019-01-20")) == DateRange(
             "2019-01-05", "2019-01-10")
+
+
+def test_total_days():
+    assert DateRange("2019-01-01", "2019-01-10").total_days() == 9
