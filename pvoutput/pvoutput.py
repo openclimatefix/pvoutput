@@ -444,16 +444,17 @@ class PVOutput:
                 'actual_date_to',
                 'record_efficiency_date'
             ]
+        numeric_cols = set(columns) - set(date_cols)
         pv_metadata = pd.read_csv(
             StringIO(pv_metadata_text),
             names=columns,
-            dtype={col: np.float32 for col in columns if col not in date_cols},
+            dtype={col: np.float32 for col in numeric_cols},
             parse_dates=date_cols
         )
         if pv_metadata.empty:
-            pv_metadata = pd.DataFrame(
-                index=[pv_system_id],
-                columns=columns)
+            data = {col: np.float32(np.NaN) for col in numeric_cols}
+            data.update({col: pd.NaT for col in date_cols})
+            pv_metadata = pd.DataFrame(data, index=[pv_system_id])
         else:
             pv_metadata.index = [pv_system_id]
 
@@ -586,7 +587,8 @@ class PVOutput:
             system_id,
             date_to=date_ranges[-1].end_date).squeeze()
 
-        if not stats['actual_date_from'] or not stats['actual_date_to']:
+        if (pd.isnull(stats['actual_date_from']) or
+            pd.isnull(stats['actual_date_to'])):
             _LOG.info('system_id %d: Stats say there is no data!', system_id)
             return []
 
@@ -595,6 +597,7 @@ class PVOutput:
 
         outputs_per_day = (
             stats['num_outputs'] / timeseries_date_range.total_days())
+
         if outputs_per_day < min_num_outputs_per_day:
             _LOG.info(
                 'system_id %d: Too few outputs per day!  Only %f per day.',
