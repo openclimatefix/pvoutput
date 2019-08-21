@@ -468,7 +468,8 @@ class PVOutput:
                                   store_filename: str,
                                   pv_system_id: int,
                                   date_from: Optional[Union[str, date]] = None,
-                                  date_to: Optional[Union[str, date]] = None
+                                  date_to: Optional[Union[str, date]] = None,
+                                  **kwargs
                                   ) -> pd.Series:
         """Will try to get stats from store_filename['statistics'].  If this
         fails, or if date_to > query_date_to, or if
@@ -485,7 +486,7 @@ class PVOutput:
         def _get_fresh_statistic():
             _print_and_log(
                 'Getting fresh statistic for {}'.format(pv_system_id))
-            stats = self.get_statistic(pv_system_id, date_from, date_to)
+            stats = self.get_statistic(pv_system_id, **kwargs)
             with pd.HDFStore(store_filename, mode='a') as store:
                 try:
                     store.remove(key='statistics', where='index=pv_system_id')
@@ -498,8 +499,7 @@ class PVOutput:
             stats = pd.read_hdf(
                 store_filename,
                 key='statistics',
-                where='index=pv_system_id'
-            )
+                where='index=pv_system_id')
         except (FileNotFoundError, KeyError):
             return _get_fresh_statistic()
 
@@ -509,11 +509,12 @@ class PVOutput:
         query_date_from = stats.iloc[0]['query_date_from']
         query_date_to = stats.iloc[0]['query_date_to']
 
-        if (date_from and query_date_from and
+        if (not pd.isnull(date_from) and
+                not pd.isnull(query_date_from) and
                 date_from < query_date_from.date()):
             return _get_fresh_statistic()
 
-        if date_to and date_to > query_date_to.date():
+        if not pd.isnull(date_to) and date_to > query_date_to.date():
             return _get_fresh_statistic()
 
         return stats
@@ -585,10 +586,12 @@ class PVOutput:
         stats = self._get_statistic_with_cache(
             store_filename,
             system_id,
-            date_to=date_ranges[-1].end_date).squeeze()
+            date_to=date_ranges[-1].end_date,
+            wait_if_rate_limit_exceeded=True
+        ).squeeze()
 
         if (pd.isnull(stats['actual_date_from']) or
-            pd.isnull(stats['actual_date_to'])):
+                pd.isnull(stats['actual_date_to'])):
             _LOG.info('system_id %d: Stats say there is no data!', system_id)
             return []
 
