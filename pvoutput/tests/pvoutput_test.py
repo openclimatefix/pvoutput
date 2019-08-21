@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from pvoutput import pvoutput
+from datetime import date
 
 
 def test_date_to_pvoutput_str():
@@ -27,16 +28,18 @@ def test_check_pv_system_status():
         timeseries = pd.DataFrame(np.zeros(n), index=index)
         return timeseries
 
+    DATE = date(2019, 1, 1)
     good_timeseries = _make_timeseries("2019-01-01 00:00", "2019-01-02 00:00")
-    pvoutput.check_pv_system_status(good_timeseries, "20190101")
+    pvoutput.check_pv_system_status(good_timeseries, DATE)
 
     bad_timeseries = _make_timeseries("2019-01-01 00:00", "2019-01-03 00:00")
     with pytest.raises(ValueError):
-        pvoutput.check_pv_system_status(bad_timeseries, "20190101")
+        pvoutput.check_pv_system_status(bad_timeseries, DATE)
 
     bad_timeseries2 = _make_timeseries("2019-01-02 00:00", "2019-01-03 00:00")
     with pytest.raises(ValueError):
-        pvoutput.check_pv_system_status(bad_timeseries2, "20190101")
+        pvoutput.check_pv_system_status(bad_timeseries2, DATE)
+
 
 def test_process_batch_status():
     # Response text copied from
