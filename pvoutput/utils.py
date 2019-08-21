@@ -1,11 +1,16 @@
+import os
 import logging
 import sys
-from typing import Dict
+from typing import Dict, Union, List, Iterable
 import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import yaml
 from pvoutput.consts import CONFIG_FILENAME
+from pvoutput.daterange import get_date_range_list, DateRange
+from datetime import datetime, date
+import numpy as np
+import pandas as pd
 
 
 _LOG = logging.getLogger('pvoutput')
@@ -82,6 +87,82 @@ def _get_response(
     return response
 
 
-def _print_and_log(msg, level=logging.INFO):
+def _print_and_log(msg: str, level: int = logging.INFO):
     _LOG.log(level, msg)
     print(msg)
+
+
+def get_system_ids_in_store(store_filename: str) -> List[int]:
+    if not os.path.exists(store_filename):
+        return []
+    with pd.HDFStore(store_filename, mode='r') as store:
+        pv_system_ids = list(store.walk('/timeseries'))[0][2]
+    return pd.to_numeric(pv_system_ids)
+
+
+def get_date_ranges_to_download(store_filename: str,
+                                system_id: int,
+                                start_date: Union[str, datetime],
+                                end_date: Union[str, datetime]
+                                ) -> List[DateRange]:
+    """If system_id in store, check if it already has data from
+    start_date to end_date, taking into consideration missing_dates.
+
+    Returns: list of DateRange objects
+        For each DateRange we need to download from
+        start_date to end_date inclusive.
+    """
+    dates_to_download = list(pd.date_range(start_date, end_date, freq="D"))
+    dates_to_download = datetime_list_to_dates(dates_to_download)
+    dates_already_downloaded = get_dates_already_downloaded(
+        store_filename, system_id)
+    dates_to_download = set(dates_to_download) - set(dates_already_downloaded)
+    missing_dates_for_id = get_missing_dates_for_id(store_filename, system_id)
+    dates_to_download -= set(missing_dates_for_id)
+    return get_date_range_list(list(dates_to_download))
+
+
+def get_missing_dates_for_id(store_filename: str, system_id: int) -> List:
+    if not os.path.exists(store_filename):
+        return []
+
+    with pd.HDFStore(store_filename, mode='r') as store:
+        missing_dates_for_id = store.select(
+            key='missing_dates',
+            where='index=system_id',
+            columns=['missing_date_PV_localtime']).squeeze()
+
+    missing_dates_for_id = datetime_list_to_dates(missing_dates_for_id)
+    missing_dates_for_id = np.unique(missing_dates_for_id)
+    _LOG.info(
+        'system_id %d: %d missing dates already found',
+        system_id,
+        len(missing_dates_for_id))
+    return missing_dates_for_id
+
+
+def datetime_list_to_dates(datetimes: Iterable[datetime]) -> Iterable[date]:
+    if not isinstance(datetimes, Iterable):
+        datetimes = [datetimes]
+    return pd.DatetimeIndex(datetimes).date
+
+
+def get_dates_already_downloaded(store_filename, system_id) -> set:
+    if not os.path.exists(store_filename):
+        return set([])
+
+    with pd.HDFStore(store_filename, mode='r') as store:
+        key = system_id_to_hdf_key(system_id)
+        try:
+            datetimes = store.select(
+                key=key, columns=['datetime', 'query_date'])
+        except KeyError:
+            return set([])
+        else:
+            query_dates = datetime_list_to_dates(
+                datetimes['query_date'].dropna())
+            return set(datetimes.index.date).union(query_dates)
+
+
+def system_id_to_hdf_key(system_id: int) -> str:
+    return '/timeseries/{:d}'.format(system_id)
