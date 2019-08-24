@@ -28,6 +28,22 @@ class DateRange:
             self.end_date - self.start_date).astype(
                 'timedelta64[D]').astype(np.float32)
 
+    def split_into_years(self) -> List:
+        duration = self.end_date - self.start_date
+        num_years = duration / timedelta(days=365)
+        if num_years <= 1:
+            return [self]
+        else:
+            end_date = self.end_date
+            new_date_ranges = []
+            for year_back in range(np.ceil(num_years).astype(int)):
+                start_date = end_date.replace(year=end_date.year-1)
+                if start_date < self.start_date:
+                    start_date = self.start_date
+                new_date_ranges.append(DateRange(start_date, end_date))
+                end_date = start_date
+            return new_date_ranges
+
 
 def get_date_range_list(dates: Iterable[date]) -> List[DateRange]:
     if not dates:
@@ -59,3 +75,47 @@ def safe_convert_to_date(dt: Union[datetime, date, str]) -> date:
         return dt.date()
     if isinstance(dt, date):
         return dt
+
+
+def merge_date_ranges_to_years(
+        date_ranges: Iterable[DateRange]) -> List[DateRange]:
+    """
+    Args:
+        date_ranges: List of DateRanges, in ascending chronological order.
+
+    Returns:
+        List of DateRanges, each representing a year, in descending order.
+    """
+    if not date_ranges:
+        return []
+
+    # Split multi-year date ranges
+    date_ranges_split = []
+    for date_range in date_ranges[::-1]:
+        date_ranges_split.extend(date_range.split_into_years())
+
+    years_to_download = []
+    for date_range in date_ranges_split:
+        if years_to_download:
+            intersection = date_range.intersection(years_to_download[-1])
+            if intersection == date_range:
+                # date_range falls within the last year to retrieve,
+                # so we can ignore this date_range
+                continue
+            elif intersection is None:
+                # No overlap
+                date_to = date_range.end_date
+            else:
+                # Overlap
+                date_to = intersection.start_date
+            date_from = date_to.replace(year=date_to.year-1)
+            years_to_download.append(DateRange(date_from, date_to))
+
+        else:
+            first_date_to = date_range.end_date
+            first_date_from = first_date_to.replace(
+                year=first_date_to.year-1)
+            years_to_download.append(
+                DateRange(first_date_from, first_date_to))
+
+    return years_to_download

@@ -16,7 +16,7 @@ from pvoutput.utils import _print_and_log, get_date_ranges_to_download
 from pvoutput.utils import system_id_to_hdf_key
 from pvoutput.consts import ONE_DAY, PV_OUTPUT_DATE_FORMAT, BASE_URL
 from pvoutput.consts import CONFIG_FILENAME, RATE_LIMIT_PARAMS_TO_API_HEADERS
-from pvoutput.daterange import DateRange
+from pvoutput.daterange import DateRange, merge_date_ranges_to_years
 
 _LOG = logging.getLogger('pvoutput')
 
@@ -248,7 +248,7 @@ class PVOutput:
         The returned DataFrame will be empty if the PVOutput API
         returns 'status 400: No status found'.
 
-        Data returned is limited to the last 365 days per request.
+        Data returned is limited to the last 366 days per request.
         To retrieve older data, use the date_to parameter.
 
         The PVOutput getbatchstatus API is asynchronous.  When it's first
@@ -262,7 +262,8 @@ class PVOutput:
         Args:
             pv_system_id: int
             date_to: str in format YYYYMMDD; or datetime
-                (localtime of the PV system)
+                (localtime of the PV system).  The returned timeseries will
+                include 366 days of data: from YYYY-1MMDD to YYYYMMDD inclusive
             max_retries: int, number of times to retry after receiving
                 a '202 Accepted' request.  Set `max_retries` to 1 if you want
                 to return immediately, even if data isn't ready yet (and hence
@@ -550,7 +551,7 @@ class PVOutput:
         for i, pv_system_id in enumerate(system_ids):
             _LOG.info('**********************')
             msg = 'system_id {:d}: {:d} of {:d} ({:%})'.format(
-                pv_system_id, i, n, i/n)
+                pv_system_id, i+1, n, (i+1)/n)
             _LOG.info(msg)
             print('\r', msg, end='', flush=True)
 
@@ -570,6 +571,10 @@ class PVOutput:
                 _LOG.info(
                     "system_id %d: No data left to download :)", pv_system_id)
                 continue
+
+            _LOG.info(
+                "system_id %d: Will download these date ranges: %s",
+                pv_system_id, date_ranges_to_download)
 
             if self.data_service_url:
                 self._batch_download_using_get_batch_status(
@@ -639,44 +644,71 @@ class PVOutput:
                                                pv_system_id,
                                                date_ranges_to_download,
                                                timezone: Optional[str] = None):
-        print("NOT IMPLEMENTED YET!  USING _batch_download_using_get_status")
-        return self._batch_download_using_get_status(
-            output_filename, pv_system_id, date_ranges_to_download, timezone)
+        years = merge_date_ranges_to_years(date_ranges_to_download)
+        dates_to = [year.end_date for year in years]
+        self._get_batch_status_helper(
+            output_filename, pv_system_id, dates_to, timezone,
+            use_get_status=False)
 
     def _batch_download_using_get_status(self,
                                          output_filename,
                                          pv_system_id,
                                          date_ranges_to_download,
                                          timezone: Optional[str] = None):
-
         for date_range in date_ranges_to_download:
             dates = date_range.date_range()
-            for date_to_load in dates:
-                datetime_of_api_request = pd.Timestamp.utcnow()
+            self._get_batch_status_helper(
+                output_filename, pv_system_id, dates, timezone,
+                use_get_status=True)
+
+    def _get_batch_status_helper(self,
+                                 output_filename,
+                                 pv_system_id,
+                                 dates,
+                                 timezone, use_get_status):
+        for date_to_load in dates:
+            _LOG.info('system_id %d: Requesting date: %s',
+                      pv_system_id, date_to_load)
+            datetime_of_api_request = pd.Timestamp.utcnow()
+            if use_get_status:
                 timeseries = self.get_status(
                     pv_system_id, date_to_load,
                     wait_if_rate_limit_exceeded=True)
-                if timeseries.empty:
+            else:
+                timeseries = self.get_batch_status(
+                    pv_system_id, date_to=date_to_load)
+            if timeseries.empty:
+                _LOG.info('system_id %d: Got empty timeseries back for %s',
+                          pv_system_id, date_to_load)
+                if use_get_status:
+                    missing_dates = [date_to_load]
+                else:
+                    missing_dates = pd.date_range(
+                        date_to_load.replace(year=date_to_load.year-1),
+                        date_to_load,
+                        freq="D")
+                for missing_date in missing_dates:
                     _append_missing_date(
                         output_filename, pv_system_id,
-                        date_to_load, datetime_of_api_request)
-                else:
-                    timeseries = timeseries.tz_localize(timezone)
-                    _LOG.info(
-                        "system_id: %d: %d rows retrieved: %s to %s",
-                        pv_system_id, len(timeseries),
-                        timeseries.index[0], timeseries.index[-1])
+                        missing_date, datetime_of_api_request)
+            else:
+                timeseries = timeseries.tz_localize(timezone)
+                _LOG.info(
+                    "system_id: %d: %d rows retrieved: %s to %s",
+                    pv_system_id, len(timeseries),
+                    timeseries.index[0], timeseries.index[-1])
+                if use_get_status:
                     check_pv_system_status(timeseries, date_to_load)
-                    timeseries[
-                        'datetime_of_API_request'] = datetime_of_api_request
-                    timeseries['query_date'] = pd.Timestamp(date_to_load)
-                    key = system_id_to_hdf_key(pv_system_id)
-                    with pd.HDFStore(
-                            output_filename, mode='a', complevel=9) as store:
-                        with warnings.catch_warnings():
-                            warnings.simplefilter(
-                                'ignore', tables.NaturalNameWarning)
-                            store.append(key=key, value=timeseries)
+                timeseries[
+                    'datetime_of_API_request'] = datetime_of_api_request
+                timeseries['query_date'] = pd.Timestamp(date_to_load)
+                key = system_id_to_hdf_key(pv_system_id)
+                with pd.HDFStore(
+                        output_filename, mode='a', complevel=9) as store:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter(
+                            'ignore', tables.NaturalNameWarning)
+                        store.append(key=key, value=timeseries)
 
     def _api_query(self,
                    service: str,

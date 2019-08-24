@@ -1,6 +1,6 @@
 import pandas as pd
 from pvoutput import daterange
-from pvoutput.daterange import DateRange
+from pvoutput.daterange import DateRange, merge_date_ranges_to_years
 from datetime import date
 
 
@@ -37,6 +37,56 @@ def test_intersection():
         DateRange("2019-01-05", "2019-01-20")) == DateRange(
             "2019-01-05", "2019-01-10")
 
+    year = DateRange("2018-01-1", "2019-01-01")
+    dec = DateRange("2018-12-01", "2019-01-01")
+    assert year.intersection(dec) == dec
+
+    june = DateRange("2018-06-01", "2018-07-01")
+    assert year.intersection(june) == june
+
+    incomplete_overlap = DateRange("2017-07-01", "2018-02-01")
+    assert year.intersection(incomplete_overlap) != incomplete_overlap
+
 
 def test_total_days():
     assert DateRange("2019-01-01", "2019-01-10").total_days() == 9
+
+
+def test_split_into_years():
+    short_dr = DateRange("2019-01-01", "2019-01-10")
+    assert short_dr.split_into_years() == [short_dr]
+
+    one_year = DateRange("2019-01-01", "2020-01-01")
+    assert one_year.split_into_years() == [one_year]
+
+    year_and_half = DateRange("2019-01-01", "2020-06-01")
+    assert year_and_half.split_into_years() == [
+        DateRange("2019-06-01", "2020-06-01"),
+        DateRange("2019-01-01", "2019-06-01")]
+
+
+def test_merge_date_ranges_to_years():
+    jan = DateRange("2018-01-01", "2018-02-01")
+    multiyear = DateRange("2017-01-01", "2018-02-01")
+    old_multiyear = DateRange("2014-01-01", "2016-02-01")
+    ancient_jan = DateRange("2010-01-01", "2010-02-01")
+    for date_ranges, merged in [
+            ([], []),
+            ([jan], [DateRange("2017-02-01", "2018-02-01")]),
+            ([multiyear], [
+                DateRange("2017-02-01", "2018-02-01"),
+                DateRange("2016-02-01", "2017-02-01")]),
+            ([old_multiyear, multiyear], [
+                DateRange("2017-02-01", "2018-02-01"),
+                DateRange("2016-02-01", "2017-02-01"),
+                DateRange("2015-02-01", "2016-02-01"),
+                DateRange("2014-02-01", "2015-02-01"),
+                DateRange("2013-02-01", "2014-02-01")]),
+            ([ancient_jan, old_multiyear, multiyear], [
+                DateRange("2017-02-01", "2018-02-01"),
+                DateRange("2016-02-01", "2017-02-01"),
+                DateRange("2015-02-01", "2016-02-01"),
+                DateRange("2014-02-01", "2015-02-01"),
+                DateRange("2013-02-01", "2014-02-01"),
+                DateRange("2009-02-01", "2010-02-01")])]:
+        assert merge_date_ranges_to_years(date_ranges) == merged
