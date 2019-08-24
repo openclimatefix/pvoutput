@@ -257,12 +257,16 @@ class PVOutput:
         Set `max_retries` to 1 if you want to return immediately, even
         if data isn't ready yet (and hence this function will return None)
 
+        https://pvoutput.org/help.html#dataservice-getbatchstatus
+
         Args:
             pv_system_id: int
             date_to: str in format YYYYMMDD; or datetime
                 (localtime of the PV system)
             max_retries: int, number of times to retry after receiving
-                a '202 Accepted' request.
+                a '202 Accepted' request.  Set `max_retries` to 1 if you want
+                to return immediately, even if data isn't ready yet (and hence
+                this function will return None).
 
         Returns:
             pd.DataFrame:
@@ -295,6 +299,10 @@ class PVOutput:
                 if retry < max_retries - 1:
                     _print_and_log('Sleeping for 1 minute.')
                     time.sleep(60)
+                else:
+                    _print_and_log(
+                        'Call get_batch_status again in a minute to see if'
+                        ' results are ready.')
             else:
                 break
         else:
