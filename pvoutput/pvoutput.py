@@ -13,7 +13,7 @@ import pandas as pd
 from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
 from pvoutput.utils import _get_response, _get_param_from_config_file
 from pvoutput.utils import _print_and_log, get_date_ranges_to_download
-from pvoutput.utils import system_id_to_hdf_key
+from pvoutput.utils import system_id_to_hdf_key, sort_and_de_dupe_pv_system
 from pvoutput.consts import ONE_DAY, PV_OUTPUT_DATE_FORMAT, BASE_URL
 from pvoutput.consts import CONFIG_FILENAME, RATE_LIMIT_PARAMS_TO_API_HEADERS
 from pvoutput.daterange import DateRange, merge_date_ranges_to_years
@@ -646,9 +646,14 @@ class PVOutput:
                                                timezone: Optional[str] = None):
         years = merge_date_ranges_to_years(date_ranges_to_download)
         dates_to = [year.end_date for year in years]
-        self._get_batch_status_helper(
+        total_rows = self._get_batch_status_helper(
             output_filename, pv_system_id, dates_to, timezone,
             use_get_status=False)
+
+        # Re-load data, sort, remove duplicate indicies, append back
+        if total_rows:
+            with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
+                sort_and_de_dupe_pv_system(store, pv_system_id)
 
     def _batch_download_using_get_status(self,
                                          output_filename,
@@ -665,7 +670,12 @@ class PVOutput:
                                  output_filename,
                                  pv_system_id,
                                  dates,
-                                 timezone, use_get_status):
+                                 timezone, use_get_status) -> int:
+        """
+        Returns:
+            total number of rows downloaded
+        """
+        total_rows = 0
         for date_to_load in dates:
             _LOG.info('system_id %d: Requesting date: %s',
                       pv_system_id, date_to_load)
@@ -692,6 +702,7 @@ class PVOutput:
                         output_filename, pv_system_id,
                         missing_date, datetime_of_api_request)
             else:
+                total_rows += len(timeseries)
                 timeseries = timeseries.tz_localize(timezone)
                 _LOG.info(
                     "system_id: %d: %d rows retrieved: %s to %s",
@@ -708,7 +719,12 @@ class PVOutput:
                     with warnings.catch_warnings():
                         warnings.simplefilter(
                             'ignore', tables.NaturalNameWarning)
-                        store.append(key=key, value=timeseries)
+                        store.append(
+                            key=key, value=timeseries, data_columns=True)
+
+        _LOG.info('system_id %d: %d total rows downloaded',
+                  pv_system_id, total_rows)
+        return total_rows
 
     def _api_query(self,
                    service: str,

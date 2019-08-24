@@ -1,3 +1,5 @@
+import warnings
+import tables
 import os
 import logging
 import sys
@@ -166,3 +168,14 @@ def get_dates_already_downloaded(store_filename, system_id) -> set:
 
 def system_id_to_hdf_key(system_id: int) -> str:
     return '/timeseries/{:d}'.format(system_id)
+
+
+def sort_and_de_dupe_pv_system(store, pv_system_id):
+    key = system_id_to_hdf_key(pv_system_id)
+    timeseries = store[key]
+    timeseries.sort_index(inplace=True)
+    timeseries = timeseries[~timeseries.index.duplicated()]
+    store.remove(key)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', tables.NaturalNameWarning)
+        store.append(key, timeseries, data_columns=True)
