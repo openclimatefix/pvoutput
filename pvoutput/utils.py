@@ -132,15 +132,26 @@ def get_missing_dates_for_id(store_filename: str, system_id: int) -> List:
         missing_dates_for_id = store.select(
             key='missing_dates',
             where='index=system_id',
-            columns=['missing_date_PV_localtime']).squeeze()
+            columns=[
+                'missing_start_date_PV_localtime',
+                'missing_end_date_PV_localtime'])
 
-    missing_dates_for_id = datetime_list_to_dates(missing_dates_for_id)
-    missing_dates_for_id = np.unique(missing_dates_for_id)
+    missing_dates = []
+    for _, row in missing_dates_for_id.iterrows():
+        missing_date_range = pd.date_range(
+            row['missing_start_date_PV_localtime'],
+            row['missing_end_date_PV_localtime'],
+            freq='D').tolist()
+        missing_dates.extend(missing_date_range)
+
+    missing_dates = np.sort(np.unique(missing_dates))
+    missing_dates = datetime_list_to_dates(missing_dates)
+    print()
     _LOG.info(
         'system_id %d: %d missing dates already found',
         system_id,
-        len(missing_dates_for_id))
-    return missing_dates_for_id
+        len(missing_dates))
+    return missing_dates
 
 
 def datetime_list_to_dates(datetimes: Iterable[datetime]) -> Iterable[date]:

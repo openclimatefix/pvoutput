@@ -26,14 +26,17 @@ def get_missing_dates():
         [
             [PV_SYSTEM_ID,
              pd.Timestamp("2019-01-02"),
+             pd.Timestamp("2019-01-02"),
              pd.Timestamp("2019-02-01", tz='UTC')],
             [PV_SYSTEM_ID,
+             pd.Timestamp("2019-01-03"),
              pd.Timestamp("2019-01-03"),
              pd.Timestamp("2019-02-01", tz='UTC')]
         ],
         columns=[
             'pv_system_id',
-            'missing_date_PV_localtime',
+            'missing_start_date_PV_localtime',
+            'missing_end_date_PV_localtime',
             'datetime_of_API_request']
         ).set_index('pv_system_id')
     return df

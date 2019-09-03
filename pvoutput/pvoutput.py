@@ -270,6 +270,7 @@ class PVOutput:
                 this function will return None).
 
         Returns:
+            None (if data isn't ready after retrying max_retries times) or
             pd.DataFrame:
                 index: datetime (DatetimeIndex, localtime of the PV system)
                 columns:  (all np.float64):
@@ -691,16 +692,15 @@ class PVOutput:
                 _LOG.info('system_id %d: Got empty timeseries back for %s',
                           pv_system_id, date_to_load)
                 if use_get_status:
-                    missing_dates = [date_to_load]
-                else:
-                    missing_dates = pd.date_range(
-                        date_to_load.replace(year=date_to_load.year-1),
-                        date_to_load,
-                        freq="D")
-                for missing_date in missing_dates:
-                    _append_missing_date(
+                    _append_missing_date_range(
                         output_filename, pv_system_id,
-                        missing_date, datetime_of_api_request)
+                        date_to_load, date_to_load, datetime_of_api_request)
+                else:
+                    _append_missing_date_range(
+                        output_filename, pv_system_id,
+                        date_to_load - timedelta(days=365),
+                        date_to_load,
+                        datetime_of_api_request)
             else:
                 total_rows += len(timeseries)
                 timeseries = timeseries.tz_localize(timezone)
@@ -710,6 +710,9 @@ class PVOutput:
                     timeseries.index[0], timeseries.index[-1])
                 if use_get_status:
                     check_pv_system_status(timeseries, date_to_load)
+                # TODO:
+                # else:
+                #    _record_gaps()
                 timeseries[
                     'datetime_of_API_request'] = datetime_of_api_request
                 timeseries['query_date'] = pd.Timestamp(date_to_load)
@@ -992,15 +995,19 @@ def _process_batch_status(pv_system_status_text):
     return pv_system_status
 
 
-def _append_missing_date(output_filename, pv_system_id,
-                         date, datetime_of_api_request):
-    new_missing_date = pd.DataFrame(
-        {
-            'missing_date_PV_localtime': pd.Timestamp(date),
-            'datetime_of_API_request': datetime_of_api_request,
-        },
-        index=[pv_system_id])
-    new_missing_date.index.name = 'pv_system_id'
+def _append_missing_date_range(output_filename, pv_system_id,
+                               missing_start_date, missing_end_date,
+                               datetime_of_api_request):
+
+    data = {
+        'missing_start_date_PV_localtime': pd.Timestamp(missing_start_date),
+        'missing_end_date_PV_localtime': pd.Timestamp(missing_end_date),
+        'datetime_of_API_request': datetime_of_api_request,
+    }
+    new_missing_date_range = pd.DataFrame(data, index=[pv_system_id])
+    new_missing_date_range.index.name = 'pv_system_id'
     with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
         store.append(
-            key='missing_dates', value=new_missing_date, data_columns=True)
+            key='missing_dates',
+            value=new_missing_date_range,
+            data_columns=True)
