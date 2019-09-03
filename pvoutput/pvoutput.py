@@ -528,15 +528,28 @@ class PVOutput:
 
         return stats
 
-    def batch_download(self,
-                       system_ids: Iterable[int],
-                       start_date: datetime,
-                       end_date: datetime,
-                       output_filename: str,
-                       timezone: Optional[str] = None,
-                       min_data_availability: Optional[float] = 0.5
-                       ):
-        """
+    def download_multiple_systems_to_disk(
+            self,
+            system_ids: Iterable[int],
+            start_date: datetime,
+            end_date: datetime,
+            output_filename: str,
+            timezone: Optional[str] = None,
+            min_data_availability: Optional[float] = 0.5,
+            use_get_batch_status_if_available: Optional[bool] = True):
+        """Download multiple PV system IDs to disk.
+
+        Data is saved to `output_filename` in HDF5 format.  The exact data
+        format is documented in
+        https://github.com/openclimatefix/pvoutput/blob/master/docs/dataset.md
+
+        This function is designed to be run for days (!) downloading
+        gigabytes of PV data :)  As such, this function can be safely
+        interrupted and re-started.  All the state required to re-start
+        is stored in the HDF5 file.
+
+        Add appropriate handlers the Python logger `pvoutput` to see progress.
+
         Args:
             system_ids: List of PV system IDs to download.
             start_date: Start of date range to download.
@@ -547,6 +560,13 @@ class PVOutput:
             min_data_availability: A float in the range [0, 1].  1 means only
                 accept PV systems which have no days of missing data.  0 means
                 accept all PV systems, no matter if they have missing data.
+                Note that the data availability is measured against the date
+                range for which the PV system has data available, not from
+                the date range passed into this function.
+            use_get_batch_status_if_available: Bool.  If true then will use
+                PVOutput's getbatchstatus API (which must be paid for, and
+                `data_service_url` must be set in `~/.pvoutput.yml` or when
+                initialising the PVOutput object).
         """
         n = len(system_ids)
         for i, pv_system_id in enumerate(system_ids):
@@ -577,14 +597,17 @@ class PVOutput:
                 "system_id %d: Will download these date ranges: %s",
                 pv_system_id, date_ranges_to_download)
 
-            if self.data_service_url:
-                self._batch_download_using_get_batch_status(
-                    output_filename,
-                    pv_system_id,
-                    date_ranges_to_download,
-                    timezone)
+            if use_get_batch_status_if_available:
+                if self.data_service_url:
+                    self._download_multiple_using_get_batch_status(
+                        output_filename,
+                        pv_system_id,
+                        date_ranges_to_download,
+                        timezone)
+                else:
+                    raise ValueError('data_service_url is not set!')
             else:
-                self._batch_download_using_get_status(
+                self._download_multiple_using_get_status(
                     output_filename,
                     pv_system_id,
                     date_ranges_to_download,
@@ -640,14 +663,16 @@ class PVOutput:
                 new_date_ranges.append(new_date_range)
         return new_date_ranges
 
-    def _batch_download_using_get_batch_status(self,
-                                               output_filename,
-                                               pv_system_id,
-                                               date_ranges_to_download,
-                                               timezone: Optional[str] = None):
+    def _download_multiple_using_get_batch_status(
+            self,
+            output_filename,
+            pv_system_id,
+            date_ranges_to_download,
+            timezone: Optional[str] = None
+            ):
         years = merge_date_ranges_to_years(date_ranges_to_download)
         dates_to = [year.end_date for year in years]
-        total_rows = self._get_batch_status_helper(
+        total_rows = self._download_multiple_worker(
             output_filename, pv_system_id, dates_to, timezone,
             use_get_status=False)
 
@@ -656,22 +681,24 @@ class PVOutput:
             with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
                 sort_and_de_dupe_pv_system(store, pv_system_id)
 
-    def _batch_download_using_get_status(self,
-                                         output_filename,
-                                         pv_system_id,
-                                         date_ranges_to_download,
-                                         timezone: Optional[str] = None):
+    def _download_multiple_using_get_status(
+            self,
+            output_filename,
+            pv_system_id,
+            date_ranges_to_download,
+            timezone: Optional[str] = None
+            ):
         for date_range in date_ranges_to_download:
             dates = date_range.date_range()
-            self._get_batch_status_helper(
+            self._download_multiple_worker(
                 output_filename, pv_system_id, dates, timezone,
                 use_get_status=True)
 
-    def _get_batch_status_helper(self,
-                                 output_filename,
-                                 pv_system_id,
-                                 dates,
-                                 timezone, use_get_status) -> int:
+    def _download_multiple_worker(self,
+                                  output_filename,
+                                  pv_system_id,
+                                  dates,
+                                  timezone, use_get_status) -> int:
         """
         Returns:
             total number of rows downloaded
@@ -712,8 +739,8 @@ class PVOutput:
                     check_pv_system_status(timeseries, date_to_load)
                 else:
                     _record_gaps(
-                        output_filename, pv_system_id, date_to_load, timeseries,
-                        datetime_of_api_request)
+                        output_filename, pv_system_id, date_to_load,
+                        timeseries, datetime_of_api_request)
                 timeseries[
                     'datetime_of_API_request'] = datetime_of_api_request
                 timeseries['query_date'] = pd.Timestamp(date_to_load)
