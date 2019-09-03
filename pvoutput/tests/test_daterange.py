@@ -75,16 +75,16 @@ def test_merge_date_ranges_to_years():
             ([jan], [DateRange("2017-02-01", "2018-02-01")]),
             ([multiyear], [
                 DateRange("2017-02-01", "2018-02-01"),
-                DateRange("2016-02-01", "2017-02-01")]),
+                DateRange("2016-02-02", "2017-02-01")]),
             ([old_multiyear, multiyear], [
                 DateRange("2017-02-01", "2018-02-01"),
-                DateRange("2016-02-01", "2017-02-01"),
+                DateRange("2016-02-02", "2017-02-01"),
                 DateRange("2015-02-01", "2016-02-01"),
                 DateRange("2014-02-01", "2015-02-01"),
                 DateRange("2013-02-01", "2014-02-01")]),
             ([ancient_jan, old_multiyear, multiyear], [
                 DateRange("2017-02-01", "2018-02-01"),
-                DateRange("2016-02-01", "2017-02-01"),
+                DateRange("2016-02-02", "2017-02-01"),
                 DateRange("2015-02-01", "2016-02-01"),
                 DateRange("2014-02-01", "2015-02-01"),
                 DateRange("2013-02-01", "2014-02-01"),

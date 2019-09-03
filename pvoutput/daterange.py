@@ -108,14 +108,11 @@ def merge_date_ranges_to_years(
             else:
                 # Overlap
                 date_to = intersection.start_date
-            date_from = date_to.replace(year=date_to.year-1)
-            years_to_download.append(DateRange(date_from, date_to))
 
         else:
-            first_date_to = date_range.end_date
-            first_date_from = first_date_to.replace(
-                year=first_date_to.year-1)
-            years_to_download.append(
-                DateRange(first_date_from, first_date_to))
+            date_to = date_range.end_date
+
+        date_from = date_to - timedelta(days=365)
+        years_to_download.append(DateRange(date_from, date_to))
 
     return years_to_download
