@@ -710,9 +710,10 @@ class PVOutput:
                     timeseries.index[0], timeseries.index[-1])
                 if use_get_status:
                     check_pv_system_status(timeseries, date_to_load)
-                # TODO:
-                # else:
-                #    _record_gaps()
+                else:
+                    _record_gaps(
+                        output_filename, pv_system_id, date_to_load, timeseries,
+                        datetime_of_api_request)
                 timeseries[
                     'datetime_of_API_request'] = datetime_of_api_request
                 timeseries['query_date'] = pd.Timestamp(date_to_load)
@@ -1011,3 +1012,52 @@ def _append_missing_date_range(output_filename, pv_system_id,
             key='missing_dates',
             value=new_missing_date_range,
             data_columns=True)
+
+
+def _record_gaps(output_filename, pv_system_id, date_to, timeseries,
+                 datetime_of_api_request):
+    dates_of_data = (
+        timeseries['instantaneous_power_gen_W'].dropna()
+        .resample('D').mean().dropna().index.date)
+    dates_requested = pd.date_range(
+        date_to - timedelta(days=365),
+        date_to,
+        freq='D').date
+    missing_dates = set(dates_requested) - set(dates_of_data)
+    if len(missing_dates) == 0:
+        return
+    missing_date_ranges = _convert_consecutive_dates_to_date_ranges(
+        list(missing_dates))
+    # Convert to from date objects to pd.Timestamp objects, because HDF5
+    # doesn't like to store date objects.
+    missing_date_ranges = missing_date_ranges.astype('datetime64')
+    missing_date_ranges['pv_system_id'] = pv_system_id
+    missing_date_ranges['datetime_of_API_request'] = datetime_of_api_request
+    missing_date_ranges.set_index('pv_system_id', inplace=True)
+    with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
+        store.append(
+            key='missing_dates',
+            value=missing_date_ranges,
+            data_columns=True)
+
+
+def _convert_consecutive_dates_to_date_ranges(missing_dates):
+    new_missing = []
+    missing_dates = np.sort(np.unique(missing_dates))
+    gaps = np.diff(missing_dates).astype('timedelta64[D]').astype(int) > 1
+    gaps = np.where(gaps)[0]
+
+    start_date = missing_dates[0]
+    for gap_i in gaps:
+        end_date = missing_dates[gap_i]
+        new_missing.append({
+            'missing_start_date_PV_localtime': start_date,
+            'missing_end_date_PV_localtime': end_date})
+        start_date = missing_dates[gap_i+1]
+
+    end_date = missing_dates[-1]
+    new_missing.append({
+        'missing_start_date_PV_localtime': start_date,
+        'missing_end_date_PV_localtime': end_date})
+
+    return pd.DataFrame(new_missing)
