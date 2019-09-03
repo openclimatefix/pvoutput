@@ -1007,6 +1007,8 @@ def _append_missing_date_range(output_filename, pv_system_id,
     }
     new_missing_date_range = pd.DataFrame(data, index=[pv_system_id])
     new_missing_date_range.index.name = 'pv_system_id'
+    _LOG.info('system_id %d: Recording missing date range from %s to %s',
+              pv_system_id, missing_start_date, missing_end_date)
     with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
         store.append(
             key='missing_dates',
@@ -1024,10 +1026,12 @@ def _record_gaps(output_filename, pv_system_id, date_to, timeseries,
         date_to,
         freq='D').date
     missing_dates = set(dates_requested) - set(dates_of_data)
-    if len(missing_dates) == 0:
-        return
     missing_date_ranges = _convert_consecutive_dates_to_date_ranges(
         list(missing_dates))
+    _LOG.info('system_id %d: %d missing date ranges found: \n%s',
+              pv_system_id, len(missing_date_ranges), missing_date_ranges)
+    if len(missing_date_ranges) == 0:
+        return
     # Convert to from date objects to pd.Timestamp objects, because HDF5
     # doesn't like to store date objects.
     missing_date_ranges = missing_date_ranges.astype('datetime64')
