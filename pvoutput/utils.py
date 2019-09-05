@@ -47,9 +47,11 @@ def get_logger(filename=None,
         handler.setFormatter(formatter)
 
     # Attach urllib3's logger to our logger.
-    urllib3_log = logging.getLogger("urllib3")
-    urllib3_log.parent = logger
-    urllib3_log.propagate = True
+    loggers_to_attach = ['urllib3', 'requests']
+    for logger_name_to_attach in loggers_to_attach:
+        logger_to_attach = logging.getLogger(logger_name_to_attach)
+        logger_to_attach.parent = logger
+        logger_to_attach.propagate = True
 
     return logger
 
@@ -61,8 +63,8 @@ def _get_session_with_retry() -> requests.Session:
                       # Set high because sometimes the network goes down for a
                       # few hours at a time.
                       # 720 x Retry.MAX_BACKOFF (120 s) = 86,400 s = 24 hrs
-        read=5,  # How many times to retry on read errors.
-        status=5  # How many times to retry on bad status codes.
+        read=20,  # How many times to retry on read errors.
+        status=20  # How many times to retry on bad status codes.
     )
     retries = Retry(
         total=max(max_retry_counts.values()),

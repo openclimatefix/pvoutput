@@ -1075,6 +1075,9 @@ def _record_gaps(output_filename, pv_system_id, date_to, timeseries,
 def _convert_consecutive_dates_to_date_ranges(missing_dates):
     new_missing = []
     missing_dates = np.sort(np.unique(missing_dates))
+    if len(missing_dates) == 0:
+        return pd.DataFrame(new_missing)
+    
     gaps = np.diff(missing_dates).astype('timedelta64[D]').astype(int) > 1
     gaps = np.where(gaps)[0]
 
