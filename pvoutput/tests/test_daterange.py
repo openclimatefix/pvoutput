@@ -61,8 +61,8 @@ def test_split_into_years():
 
     year_and_half = DateRange("2019-01-01", "2020-06-01")
     assert year_and_half.split_into_years() == [
-        DateRange("2019-06-01", "2020-06-01"),
-        DateRange("2019-01-01", "2019-06-01")]
+        DateRange("2019-06-02", "2020-06-01"),
+        DateRange("2019-01-01", "2019-06-02")]
 
 
 def test_merge_date_ranges_to_years():

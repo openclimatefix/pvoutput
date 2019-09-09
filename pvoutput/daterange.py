@@ -37,7 +37,7 @@ class DateRange:
             end_date = self.end_date
             new_date_ranges = []
             for year_back in range(np.ceil(num_years).astype(int)):
-                start_date = end_date.replace(year=end_date.year-1)
+                start_date = end_date - timedelta(days=365)
                 if start_date < self.start_date:
                     start_date = self.start_date
                 new_date_ranges.append(DateRange(start_date, end_date))
