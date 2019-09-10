@@ -57,7 +57,6 @@ def get_logger(filename=None,
 
 
 def _get_session_with_retry() -> requests.Session:
-    session = requests.Session()
     max_retry_counts = dict(
         connect=720,  # How many connection-related errors to retry on.
                       # Set high because sometimes the network goes down for a
@@ -72,6 +71,7 @@ def _get_session_with_retry() -> requests.Session:
         status_forcelist=[500, 502, 503, 504],
         **max_retry_counts
     )
+    session = requests.Session()
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
 
