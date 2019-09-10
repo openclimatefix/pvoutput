@@ -72,6 +72,7 @@ def _get_session_with_retry() -> requests.Session:
         **max_retry_counts
     )
     session = requests.Session()
+    session.mount('http://', HTTPAdapter(max_retries=retries))
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
 
