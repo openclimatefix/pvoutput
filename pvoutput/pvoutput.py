@@ -85,6 +85,8 @@ class PVOutput:
                     'data_service_url', config_filename)
             except KeyError:
                 pass
+            except FileNotFoundError:
+                pass
 
         if self.data_service_url is not None:
             if not self.data_service_url.strip('/').endswith('.org'):
