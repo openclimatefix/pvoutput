@@ -842,7 +842,7 @@ class PVOutput:
         api_params['key'] = self.api_key
         api_params['sid'] = self.system_id
 
-        api_url = os.path.join(
+        api_url = urljoin(
             self.data_service_url, 'service/r2/{}.jsp'.format(service))
 
         return _get_response(api_url, api_params, headers)
