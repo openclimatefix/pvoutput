@@ -8,15 +8,13 @@ def test_convert_consecutive_dates_to_date_ranges():
     missing_dates = dr1 + dr2
     date_ranges = pvoutput._convert_consecutive_dates_to_date_ranges(
         missing_dates)
-
+    columns = ['missing_start_date_PV_localtime',
+               'missing_end_date_PV_localtime']
     pd.testing.assert_frame_equal(
-        date_ranges,
+        date_ranges[columns],
         pd.DataFrame(
             [
                 [dr1[0], dr1[-1]],
                 [dr2[0], dr2[-1]],
             ],
-            columns=[
-                'missing_start_date_PV_localtime',
-                'missing_end_date_PV_localtime'
-            ]))
+            columns=columns))
