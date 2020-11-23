@@ -9,6 +9,7 @@ import requests
 import tables
 import numpy as np
 import pandas as pd
+from urllib.parse import urljoin
 
 from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
 from pvoutput.utils import _get_response, _get_param_from_config_file
@@ -84,6 +85,8 @@ class PVOutput:
                 self.data_service_url = _get_param_from_config_file(
                     'data_service_url', config_filename)
             except KeyError:
+                pass
+            except FileNotFoundError:
                 pass
 
         if self.data_service_url is not None:
@@ -816,8 +819,7 @@ class PVOutput:
             'X-Pvoutput-Apikey': self.api_key,
             'X-Pvoutput-SystemId': self.system_id}
 
-        api_url = os.path.join(
-            BASE_URL, 'service/r2/{}.jsp'.format(service))
+        api_url = urljoin(BASE_URL, 'service/r2/{}.jsp'.format(service))
 
         return _get_response(api_url, api_params, headers)
 
@@ -840,7 +842,7 @@ class PVOutput:
         api_params['key'] = self.api_key
         api_params['sid'] = self.system_id
 
-        api_url = os.path.join(
+        api_url = urljoin(
             self.data_service_url, 'service/r2/{}.jsp'.format(service))
 
         return _get_response(api_url, api_params, headers)
