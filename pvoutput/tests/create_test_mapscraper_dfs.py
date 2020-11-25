@@ -1,11 +1,19 @@
 import os
 import pickle
+import sys
 
 from pvoutput import mapscraper as ms
-from pvoutput.tests.mapscraper_test import get_test_soup, data_dir
+from pvoutput.tests.test_utils import data_dir
 
 
-FILENAME = 'mapscraper_dfs.pickle'
+FILENAME = 'mapscraper_dict_of_dfs.pickle'
+
+
+def get_keys_for_dict():
+    keys = ('pv_system_size_metadata', 'process_output_col',
+            'process_generation_and_average_cols', 'process_efficiency_col',
+            'process_metadata')
+    return keys
 
 
 def get_test_soup():
@@ -16,12 +24,12 @@ def get_test_soup():
 
 
 def main():
-    keys = ('pv_system_size_metadata', 'process_output_col',
-            'process_generation_and_average_cols', 'process_efficiency_col',
-            'combined_metadata')
     soup = get_test_soup()
+    keys = get_keys_for_dict()
     values =  ms._process_metadata(soup, True)
     df_dict = dict(zip(keys, values))
+    #needed to avoid occasional RecursionError
+    sys.setrecursionlimit(10000)
     with open(FILENAME, 'wb') as f:
         pickle.dump(df_dict, f)
 
