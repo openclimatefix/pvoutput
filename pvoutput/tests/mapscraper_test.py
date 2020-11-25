@@ -8,15 +8,20 @@ from functools import partial
 from pvoutput import mapscraper as ms
 from pvoutput.consts import MAP_URL
 from pvoutput.tests.test_utils import data_dir
-#TODO MAYBE swap this import round, then can modify soup in function and check unit tests still pass
-from pvoutput.tests.create_test_mapscraper_dfs import get_keys_for_dict, get_test_soup
 
-#todo get pickle file which is a dict of dataframes for all the mapscraper functions and create a fixture for that
-#TODO write unit test for each function make sure it matches input df including for _process_metadata
-#TODO add bit of code below in _process_metadata, make sure it still passes
-# for script in soup.find_all('script', src=False):
-#     script.decompose()
 
+def get_keys_for_dict():
+    keys = ('pv_system_size_metadata', 'process_output_col',
+            'process_generation_and_average_cols', 'process_efficiency_col',
+            'process_metadata')
+    return keys
+
+
+def get_test_soup():
+    test_soup_filepath = os.path.join(data_dir(), 'mapscraper_soup.pickle')
+    with open(test_soup_filepath, 'rb') as f:
+        test_soup = pickle.load(f)
+    return ms.clean_soup(test_soup)
 
 
 @pytest.fixture(scope='module')

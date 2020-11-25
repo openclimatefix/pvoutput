@@ -54,6 +54,7 @@ def get_pv_systems_for_country(
             sort_by=sort_by)
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'html.parser')
+        soup = clean_soup(soup)
         metadata = _process_metadata(soup)
         all_metadata.append(metadata)
 
@@ -289,9 +290,21 @@ def _process_generation_and_average_cols(
 def _process_efficiency_col(
         soup: BeautifulSoup,
         index: Optional[Iterable] = None) -> pd.Series:
-    #TODO ISSUE HERE WITH JAVASCRIPT being picked up, need to filter it out, could look for string like 'OpenStreet_Map and exclude it
-    for script in soup.find_all('script', src=False):
-        script.decompose()
     efficiency_col = soup.find_all(text=re.compile('\dkWh/kW'))
     return pd.Series(
         efficiency_col, name='average_efficiency_kWh_per_kW', index=index)
+
+
+def clean_soup(soup):
+    """ Function to clean scraped soup object. The downloaded soup could change
+        over time.
+    Args:
+        soup: bs4.BeautifulSoup
+
+    Returns:
+        bs4.BeautifulSoup
+
+    """
+    for script in soup.find_all('script', src=False):
+        script.decompose()
+    return soup
