@@ -149,7 +149,8 @@ def _page_has_next_link(soup: BeautifulSoup):
 ############# PROCESS HTML #########################
 
 
-def _process_metadata(soup: BeautifulSoup) -> pd.DataFrame:
+def _process_metadata(soup: BeautifulSoup,
+                      return_constituents=False) -> pd.DataFrame:
     pv_system_size_metadata = _process_system_size_col(soup)
     index = pv_system_size_metadata.index
     pv_systems_metadata = [
@@ -163,6 +164,9 @@ def _process_metadata(soup: BeautifulSoup) -> pd.DataFrame:
     df = _convert_metadata_cols_to_numeric(df)
     df['system_AC_capacity_W'] = df['capacity_kW'] * 1E3
     del df['capacity_kW']
+    if return_constituents:
+        pv_systems_metadata.append(df)
+        return tuple(pv_systems_metadata)
     return df
 
 
@@ -248,6 +252,7 @@ def _process_output_col(
         index: Optional[Iterable] = None) -> pd.Series:
     outputs_col = soup.find_all(text=re.compile('\d Days'))
     duration = pd.Series(outputs_col, name='timeseries_duration', index=index)
+    #TODO Fix for later versions of python
     return pd.to_timedelta(duration)
 
 
@@ -284,6 +289,9 @@ def _process_generation_and_average_cols(
 def _process_efficiency_col(
         soup: BeautifulSoup,
         index: Optional[Iterable] = None) -> pd.Series:
+    #TODO ISSUE HERE WITH JAVASCRIPT being picked up, need to filter it out, could look for string like 'OpenStreet_Map and exclude it
+    for script in soup.find_all('script', src=False):
+        script.decompose()
     efficiency_col = soup.find_all(text=re.compile('\dkWh/kW'))
     return pd.Series(
         efficiency_col, name='average_efficiency_kWh_per_kW', index=index)

@@ -1,7 +1,27 @@
 import pytest
 import numpy as np
+import os
+import pickle
+
 from pvoutput import mapscraper as ms
 from pvoutput.consts import MAP_URL
+from pvoutput.tests.test_utils import data_dir
+
+#todo get pickle file which is a dict of dataframes for all the mapscraper functions and create a fixture for that
+#TODO write unit test for each function make sure it matches input df including for _process_metadata
+#TODO add bit of code below in _process_metadata, make sure it still passes
+# for script in soup.find_all('script', src=False):
+#     script.decompose()
+
+#TODO CHECK FIXTURE ONLY CALLED ONCE
+
+
+@pytest.fixture
+def get_test_soup():
+    test_soup_filepath = os.path.join(data_dir(), 'mapscraper_soup.pickle')
+    with open(test_soup_filepath, 'rb') as f:
+        test_soup = pickle.load(f)
+    return test_soup
 
 
 def test_convert_to_country_code():
