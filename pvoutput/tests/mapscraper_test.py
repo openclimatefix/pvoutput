@@ -1,7 +1,53 @@
 import pytest
 import numpy as np
+import os
+import pickle
+import pandas as pd
+from functools import partial
+
 from pvoutput import mapscraper as ms
 from pvoutput.consts import MAP_URL
+from pvoutput.tests.test_utils import data_dir
+from pvoutput.tests.create_mapscraper_test_files import get_keys_for_dict
+
+
+def get_cleaned_test_soup():
+    test_soup_filepath = os.path.join(data_dir(), 'mapscraper_soup.pickle')
+    with open(test_soup_filepath, 'rb') as f:
+        test_soup = pickle.load(f)
+    return ms.clean_soup(test_soup)
+
+
+@pytest.fixture(scope='module')
+def get_test_dict_of_dfs():
+    dict_filepath = os.path.join(data_dir(), 'mapscraper_dict_of_dfs.pickle')
+    with open(dict_filepath, 'rb') as f:
+        test_soup = pickle.load(f)
+    return test_soup
+
+
+@pytest.fixture(scope='module')
+def get_function_dict():
+    #using partials so functions only get executed when needed
+    soup = get_cleaned_test_soup()
+    df = ms._process_system_size_col(soup)
+    index = df.index
+    keys = get_keys_for_dict()
+    functions = (partial(ms._process_system_size_col, soup),
+                 partial(ms._process_output_col, soup, index),
+                 partial(ms._process_generation_and_average_cols, soup,  index),
+                 partial(ms._process_efficiency_col, soup, index),
+                 partial(ms._process_metadata, soup))
+    function_dict = dict(zip(keys, functions))
+    return function_dict
+
+
+def compare_function_output_to_pickle(key, function_dict, dict_of_dfs, series=False):
+    df_from_func = function_dict[key]()
+    test_df = dict_of_dfs[key]
+    if series:
+        return pd.testing.assert_series_equal(df_from_func, test_df)
+    return pd.testing.assert_frame_equal(df_from_func, test_df, check_like=True)
 
 
 def test_convert_to_country_code():
@@ -27,3 +73,34 @@ def test_create_map_url():
     assert ms._create_map_url(sort_by='efficiency') == MAP_URL + '?o=gss'
     with pytest.raises(ValueError):
         ms._create_map_url(sort_by='blah')
+
+
+def test_pv_system_size_metadata(get_function_dict, get_test_dict_of_dfs):
+    assert compare_function_output_to_pickle('pv_system_size_metadata', get_function_dict,
+                                      get_test_dict_of_dfs) is None
+
+
+def test_process_output_col(get_function_dict, get_test_dict_of_dfs):
+    assert compare_function_output_to_pickle('process_output_col',
+                                             get_function_dict,
+                                             get_test_dict_of_dfs, series=True) is None
+
+
+def test_process_generation_and_average_cols(get_function_dict,
+                                             get_test_dict_of_dfs):
+    assert compare_function_output_to_pickle('process_generation_and_average_cols',
+                                             get_function_dict,
+                                             get_test_dict_of_dfs) is None
+
+
+def test_process_efficiency_col(get_function_dict, get_test_dict_of_dfs):
+    assert compare_function_output_to_pickle('process_efficiency_col',
+                                             get_function_dict,
+                                             get_test_dict_of_dfs,
+                                             series=True) is None
+
+
+def test_process_metadata(get_function_dict, get_test_dict_of_dfs):
+    assert compare_function_output_to_pickle('process_metadata',
+                                             get_function_dict,
+                                             get_test_dict_of_dfs) is None

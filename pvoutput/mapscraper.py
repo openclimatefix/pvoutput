@@ -52,8 +52,7 @@ def get_pv_systems_for_country(
             page_number=page_number,
             ascending=ascending,
             sort_by=sort_by)
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = get_soup(url)
         metadata = _process_metadata(soup)
         all_metadata.append(metadata)
 
@@ -149,7 +148,8 @@ def _page_has_next_link(soup: BeautifulSoup):
 ############# PROCESS HTML #########################
 
 
-def _process_metadata(soup: BeautifulSoup) -> pd.DataFrame:
+def _process_metadata(soup: BeautifulSoup,
+                      return_constituents=False) -> pd.DataFrame:
     pv_system_size_metadata = _process_system_size_col(soup)
     index = pv_system_size_metadata.index
     pv_systems_metadata = [
@@ -163,6 +163,9 @@ def _process_metadata(soup: BeautifulSoup) -> pd.DataFrame:
     df = _convert_metadata_cols_to_numeric(df)
     df['system_AC_capacity_W'] = df['capacity_kW'] * 1E3
     del df['capacity_kW']
+    if return_constituents:
+        pv_systems_metadata.append(df)
+        return tuple(pv_systems_metadata)
     return df
 
 
@@ -248,7 +251,7 @@ def _process_output_col(
         index: Optional[Iterable] = None) -> pd.Series:
     outputs_col = soup.find_all(text=re.compile('\d Days'))
     duration = pd.Series(outputs_col, name='timeseries_duration', index=index)
-    return pd.to_timedelta(duration)
+    return pd.to_timedelta(duration.astype('unicode'))
 
 
 def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:
@@ -287,3 +290,26 @@ def _process_efficiency_col(
     efficiency_col = soup.find_all(text=re.compile('\dkWh/kW'))
     return pd.Series(
         efficiency_col, name='average_efficiency_kWh_per_kW', index=index)
+
+
+def get_soup(url, raw=False):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    if raw:
+        return soup
+    return clean_soup(soup)
+
+
+def clean_soup(soup):
+    """ Function to clean scraped soup object. The downloaded soup could change
+        over time.
+    Args:
+        soup: bs4.BeautifulSoup
+
+    Returns:
+        bs4.BeautifulSoup
+
+    """
+    for script in soup.find_all('script', src=False):
+        script.decompose()
+    return soup
