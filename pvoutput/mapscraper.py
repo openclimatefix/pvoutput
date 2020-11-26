@@ -52,9 +52,7 @@ def get_pv_systems_for_country(
             page_number=page_number,
             ascending=ascending,
             sort_by=sort_by)
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        soup = clean_soup(soup)
+        soup = get_soup(url)
         metadata = _process_metadata(soup)
         all_metadata.append(metadata)
 
@@ -293,6 +291,14 @@ def _process_efficiency_col(
     efficiency_col = soup.find_all(text=re.compile('\dkWh/kW'))
     return pd.Series(
         efficiency_col, name='average_efficiency_kWh_per_kW', index=index)
+
+
+def get_soup(url, raw=False):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    if raw:
+        return soup
+    return clean_soup(soup)
 
 
 def clean_soup(soup):

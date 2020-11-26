@@ -8,16 +8,10 @@ from functools import partial
 from pvoutput import mapscraper as ms
 from pvoutput.consts import MAP_URL
 from pvoutput.tests.test_utils import data_dir
+from pvoutput.tests.create_mapscraper_test_files import get_keys_for_dict
 
 
-def get_keys_for_dict():
-    keys = ('pv_system_size_metadata', 'process_output_col',
-            'process_generation_and_average_cols', 'process_efficiency_col',
-            'process_metadata')
-    return keys
-
-
-def get_test_soup():
+def get_cleaned_test_soup():
     test_soup_filepath = os.path.join(data_dir(), 'mapscraper_soup.pickle')
     with open(test_soup_filepath, 'rb') as f:
         test_soup = pickle.load(f)
@@ -35,7 +29,7 @@ def get_test_dict_of_dfs():
 @pytest.fixture(scope='module')
 def get_function_dict():
     #using partials so functions only get executed when needed
-    soup = get_test_soup()
+    soup = get_cleaned_test_soup()
     df = ms._process_system_size_col(soup)
     index = df.index
     keys = get_keys_for_dict()
