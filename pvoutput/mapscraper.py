@@ -251,8 +251,7 @@ def _process_output_col(
         index: Optional[Iterable] = None) -> pd.Series:
     outputs_col = soup.find_all(text=re.compile('\d Days'))
     duration = pd.Series(outputs_col, name='timeseries_duration', index=index)
-    #TODO Fix for later versions of python
-    return pd.to_timedelta(duration)
+    return pd.to_timedelta(duration.astype('unicode'))
 
 
 def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:

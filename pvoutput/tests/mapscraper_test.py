@@ -47,7 +47,7 @@ def compare_function_output_to_pickle(key, function_dict, dict_of_dfs, series=Fa
     test_df = dict_of_dfs[key]
     if series:
         return pd.testing.assert_series_equal(df_from_func, test_df)
-    return pd.testing.assert_frame_equal(df_from_func, test_df)
+    return pd.testing.assert_frame_equal(df_from_func, test_df, check_like=True)
 
 
 def test_convert_to_country_code():
