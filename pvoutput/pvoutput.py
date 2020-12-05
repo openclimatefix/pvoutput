@@ -165,6 +165,7 @@ class PVOutput:
     def get_status(self,
                    pv_system_id: int,
                    date: Union[str, datetime],
+                   historic: bool = True,
                    **kwargs
                    ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
@@ -199,7 +200,7 @@ class PVOutput:
 
         api_params = {
             'd': date,  # date, YYYYMMDD, localtime of the PV system
-            'h': 1,  # We want historical data.
+            'h': int(historic == True),  # We want historical data.
             'limit': 288,  # API limit is 288 (num of 5-min periods per day).
             'ext': 0,  # Extended data; we don't want extended data.
             'sid1': pv_system_id  # SystemID.
@@ -226,6 +227,13 @@ class PVOutput:
             'power_gen_normalised',
             'energy_consumption_Wh',
             'power_demand_W',
+            'temperature_C',
+            'voltage'] if historic else [
+            'cumulative_energy_gen_Wh',
+            'instantaneous_power_gen_W',
+            'energy_consumption_Wh',
+            'power_demand_W',
+            'power_gen_normalised',
             'temperature_C',
             'voltage']
 
