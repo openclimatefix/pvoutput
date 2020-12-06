@@ -624,14 +624,14 @@ class PVOutput:
                     date_ranges_to_download,
                     timezone)
 
-    def get_insolation(self,
-                       date: Union[str, datetime],
-                       pv_system_id: Optional[int] = None,
-                       timezone: Optional[str] = None,
-                       lat: Optional[float] = None,
-                       lon: Optional[float] = None,
-                       **kwargs
-                       ):
+    def get_insolation_forecast(self,
+                                date: Union[str, datetime],
+                                pv_system_id: Optional[int] = None,
+                                timezone: Optional[str] = None,
+                                lat: Optional[float] = None,
+                                lon: Optional[float] = None,
+                                **kwargs
+                                ):
         """ Get Insolation data for a given site, or a given location defined by
         longitude and latitude. This is the estimated output for the site
         based on ideal weather conditions. Also factors in site age, reducing
