@@ -165,6 +165,7 @@ class PVOutput:
     def get_status(self,
                    pv_system_id: int,
                    date: Union[str, datetime],
+                   historic: bool = True,
                    **kwargs
                    ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
@@ -199,7 +200,7 @@ class PVOutput:
 
         api_params = {
             'd': date,  # date, YYYYMMDD, localtime of the PV system
-            'h': 1,  # We want historical data.
+            'h': int(historic == True),  # We want historical data.
             'limit': 288,  # API limit is 288 (num of 5-min periods per day).
             'ext': 0,  # Extended data; we don't want extended data.
             'sid1': pv_system_id  # SystemID.
@@ -226,6 +227,13 @@ class PVOutput:
             'power_gen_normalised',
             'energy_consumption_Wh',
             'power_demand_W',
+            'temperature_C',
+            'voltage'] if historic else [
+            'cumulative_energy_gen_Wh',
+            'instantaneous_power_gen_W',
+            'energy_consumption_Wh',
+            'power_demand_W',
+            'power_gen_normalised',
             'temperature_C',
             'voltage']
 
@@ -616,6 +624,67 @@ class PVOutput:
                     date_ranges_to_download,
                     timezone)
 
+    def get_insolation_forecast(self,
+                                date: Union[str, datetime],
+                                pv_system_id: Optional[int] = None,
+                                timezone: Optional[str] = None,
+                                lat: Optional[float] = None,
+                                lon: Optional[float] = None,
+                                **kwargs
+                                ):
+        """ Get Insolation data for a given site, or a given location defined by
+        longitude and latitude. This is the estimated output for the site
+        based on ideal weather conditions. Also factors in site age, reducing
+        ouput by 1% each year, shade and orientation. Need donation mode enabled.
+        See https://pvoutput.org/help.html#api-getinsolation
+
+        Args:
+           date: str in format YYYYMMDD; or datetime
+            (localtime of the PV system)
+            pv_system_id: int
+            timezone: str
+            lat: float e.g. -27.4676
+            lon: float e.g. 153.0279
+            **kwargs:
+
+
+        Returns:
+
+        """
+        date = date_to_pvoutput_str(date)
+        _check_date(date, prediction=True)
+        api_params = {
+            'd': date,  # date, YYYYMMDD, localtime of the PV system
+            'sid1': pv_system_id,  # SystemID.
+            'tz': timezone # defaults to configured timezone of system otherwise GMT
+        }
+        if lat is not None and lon is not None:
+            api_params['ll'] = '{:f},{:f}'.format(lat, lon)
+
+        try:
+            pv_insolation_text = self._api_query(
+                service='getinsolation', api_params=api_params, **kwargs)
+        except NoStatusFound:
+            _LOG.info(
+                'system_id %d: No status found for date %s',
+                pv_system_id, date)
+            pv_insolation_text = ""
+
+        columns = [
+            'predicted_power_gen_W',
+            'predicted_cumulative_energy_gen_Wh'
+            ]
+        pv_insolation = pd.read_csv(
+            StringIO(pv_insolation_text),
+            lineterminator=';',
+            names=['time'] + columns,
+            dtype={col: np.float64 for col in columns}
+        ).sort_index()
+        pv_insolation.index = pd.to_datetime(date + ' ' + pv_insolation.time,
+                                             format= '%Y-%m-%d %H:%M')
+        pv_insolation.drop('time', axis=1, inplace=True)
+        return pv_insolation
+
     def _filter_date_range(self,
                            store_filename: str,
                            system_id: int,
@@ -939,7 +1008,7 @@ def date_to_pvoutput_str(date: Union[str, datetime]) -> str:
     return date.strftime(PV_OUTPUT_DATE_FORMAT)
 
 
-def _check_date(date: str):
+def _check_date(date: str, prediction=False):
     """Check that date string conforms to YYYYMMDD format,
     and that the date isn't in the future.
 
@@ -947,8 +1016,9 @@ def _check_date(date: str):
         ValueError if the date is 'bad'.
     """
     dt = datetime.strptime(date, PV_OUTPUT_DATE_FORMAT)
-    if dt > datetime.now():
+    if dt > datetime.now() and not prediction:
         raise ValueError(
+            ''
             'date should not be in the future.  Got {}.  Current date is {}.'
             .format(date, datetime.now()))
 
