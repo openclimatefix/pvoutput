@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 BASE_URL = 'https://pvoutput.org'
 MAP_URL = urljoin(BASE_URL, 'map.jsp')
+REGIONS_URL = urljoin(BASE_URL, 'region.jsp')
 
 # Country codes used by PVOutput.org on, for example,
 # https://pvoutput.org/map.jsp.  Taken from

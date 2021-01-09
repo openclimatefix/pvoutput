@@ -4,7 +4,7 @@ from copy import copy
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from pvoutput.consts import MAP_URL, PV_OUTPUT_COUNTRY_CODES
+from pvoutput.consts import MAP_URL, PV_OUTPUT_COUNTRY_CODES, REGIONS_URL
 from pvoutput.consts import PV_OUTPUT_MAP_COLUMN_NAMES
 
 
@@ -16,6 +16,7 @@ def get_pv_systems_for_country(
         ascending: Optional[bool] = None,
         sort_by: Optional[str] = None,
         max_pages: int = _MAX_NUM_PAGES,
+        region: Optional[str] = None
         ) -> pd.DataFrame:
     """
     Args:
@@ -43,15 +44,18 @@ def get_pv_systems_for_country(
     """
 
     country_code = _convert_to_country_code(country)
-
+    regions = [region] if region else get_regions_for_country(country_code)
+    #TODO LOOP THROUGH REGIONS HRE
     all_metadata = []
     for page_number in range(max_pages):
         print('\rReading page {:2d}'.format(page_number), end='', flush=True)
+        #TODO pass region in here
         url = _create_map_url(
             country_code=country_code,
             page_number=page_number,
             ascending=ascending,
-            sort_by=sort_by)
+            sort_by=sort_by,
+            region=region)
         soup = get_soup(url)
         metadata = _process_metadata(soup)
         all_metadata.append(metadata)
@@ -68,7 +72,8 @@ def _create_map_url(
         country_code: Optional[int] = None,
         page_number: Optional[int] = None,
         ascending: Optional[bool] = None,
-        sort_by: Optional[str] = None
+        sort_by: Optional[str] = None,
+        region: Optional[str] = None
         ) -> str:
     """
     Args:
@@ -96,7 +101,8 @@ def _create_map_url(
         'country': country_code,
         'p': page_number,
         'd': sort_order,
-        'o': sort_by_pv_output_col_name
+        'o': sort_by_pv_output_col_name,
+        'region': region
     }
 
     url_params_list = [
@@ -292,9 +298,9 @@ def _process_efficiency_col(
         efficiency_col, name='average_efficiency_kWh_per_kW', index=index)
 
 
-def get_soup(url, raw=False):
+def get_soup(url, raw=False, parser='html.parser'):
     response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.text, parser)
     if raw:
         return soup
     return clean_soup(soup)
@@ -313,3 +319,18 @@ def clean_soup(soup):
     for script in soup.find_all('script', src=False):
         script.decompose()
     return soup
+
+
+def get_regions_for_country(country_code: int):
+    region_list = []
+    url = f'{REGIONS_URL}?country={country_code}'
+    soup = get_soup(url, parser='lxml')
+    region_tags = soup.find_all(
+        'a', href=re.compile('map\.jsp\?country='))
+    for row in region_tags:
+        href = row.attrs['href']
+        p = re.compile('^map\.jsp\?country=243&region=(\w+\s*\w+)$')
+        href_match = p.match(href)
+        region = href_match.group(1)
+        region_list.append(1)
+    return region_list
