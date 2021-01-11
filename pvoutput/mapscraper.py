@@ -4,7 +4,7 @@ from copy import copy
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from pvoutput.consts import MAP_URL, PV_OUTPUT_COUNTRY_CODES
+from pvoutput.consts import MAP_URL, PV_OUTPUT_COUNTRY_CODES, REGIONS_URL
 from pvoutput.consts import PV_OUTPUT_MAP_COLUMN_NAMES
 
 
@@ -16,6 +16,7 @@ def get_pv_systems_for_country(
         ascending: Optional[bool] = None,
         sort_by: Optional[str] = None,
         max_pages: int = _MAX_NUM_PAGES,
+        region: Optional[str] = None
         ) -> pd.DataFrame:
     """
     Args:
@@ -43,21 +44,26 @@ def get_pv_systems_for_country(
     """
 
     country_code = _convert_to_country_code(country)
-
+    regions = [region] if region else get_regions_for_country(country_code)
     all_metadata = []
-    for page_number in range(max_pages):
-        print('\rReading page {:2d}'.format(page_number), end='', flush=True)
-        url = _create_map_url(
-            country_code=country_code,
-            page_number=page_number,
-            ascending=ascending,
-            sort_by=sort_by)
-        soup = get_soup(url)
-        metadata = _process_metadata(soup)
-        all_metadata.append(metadata)
+    for region in regions:
+        for page_number in range(max_pages):
+            print('\rReading page {:2d} for region: {}'.format(page_number, region), end='', flush=True)
+            url = _create_map_url(
+                country_code=country_code,
+                page_number=page_number,
+                ascending=ascending,
+                sort_by=sort_by,
+                region=region)
+            soup = get_soup(url)
+            if _page_is_blank(soup):
+                break
+            metadata = _process_metadata(soup)
+            metadata['region'] = region
+            all_metadata.append(metadata)
 
-        if not _page_has_next_link(soup):
-            break
+            if not _page_has_next_link(soup):
+                break
 
     return pd.concat(all_metadata)
 
@@ -68,7 +74,8 @@ def _create_map_url(
         country_code: Optional[int] = None,
         page_number: Optional[int] = None,
         ascending: Optional[bool] = None,
-        sort_by: Optional[str] = None
+        sort_by: Optional[str] = None,
+        region: Optional[str] = None
         ) -> str:
     """
     Args:
@@ -96,7 +103,8 @@ def _create_map_url(
         'country': country_code,
         'p': page_number,
         'd': sort_order,
-        'o': sort_by_pv_output_col_name
+        'o': sort_by_pv_output_col_name,
+        'region': region
     }
 
     url_params_list = [
@@ -172,7 +180,6 @@ def _process_metadata(soup: BeautifulSoup,
 def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
     pv_system_size_col = soup.find_all(
         'a', href=re.compile('display\.jsp\?sid='))
-
     metadata = []
     for row in pv_system_size_col:
         metadata_for_row = {}
@@ -237,7 +244,7 @@ def _remove_str_and_convert_to_numeric(
 
 def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
     for col_name, string_to_remove in [
-            ('array_tilt_degrees', '°'),
+            #('array_tilt_degrees', '°'),
             ('capacity_kW', 'kW'),
             ('average_efficiency_kWh_per_kW', 'kWh/kW')]:
         df[col_name] = _remove_str_and_convert_to_numeric(
@@ -268,7 +275,9 @@ def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:
 def _process_generation_and_average_cols(
         soup: BeautifulSoup,
         index: Optional[Iterable] = None) -> pd.DataFrame:
-    generation_and_average_cols = soup.find_all(text=re.compile('\d[Mk]Wh$'))
+    _soup = copy(soup)
+    [s.decompose() for s in _soup.select('a')]
+    generation_and_average_cols = _soup.find_all(text=re.compile('\d[Mk]Wh$'))
     generation_col = generation_and_average_cols[0::2]
     average_col = generation_and_average_cols[1::2]
     df = pd.DataFrame(
@@ -292,9 +301,16 @@ def _process_efficiency_col(
         efficiency_col, name='average_efficiency_kWh_per_kW', index=index)
 
 
-def get_soup(url, raw=False):
+def _page_is_blank(soup: BeautifulSoup) -> bool:
+    #Pages can still be blank even if the previous page has a Next Button
+    pv_system_size_col = soup.find_all(
+        'a', href=re.compile('display\.jsp\?sid='))
+    return not bool(pv_system_size_col)
+
+
+def get_soup(url, raw=False, parser='html.parser'):
     response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.text, parser)
     if raw:
         return soup
     return clean_soup(soup)
@@ -313,3 +329,18 @@ def clean_soup(soup):
     for script in soup.find_all('script', src=False):
         script.decompose()
     return soup
+
+
+def get_regions_for_country(country_code: int):
+    region_list = []
+    url = f'{REGIONS_URL}?country={country_code}'
+    soup = get_soup(url, parser='lxml')
+    region_tags = soup.find_all(
+        'a', href=re.compile('map\.jsp\?country='))
+    for row in region_tags:
+        href = row.attrs['href']
+        p = re.compile('^map\.jsp\?country=243&region=(\w+.*)$')
+        href_match = p.match(href)
+        region = href_match.group(1)
+        region_list.append(region)
+    return region_list
