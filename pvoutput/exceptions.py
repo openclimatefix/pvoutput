@@ -2,7 +2,7 @@ import requests
 
 
 class BadStatusCode(Exception):
-    def __init__(self, response: requests.Response, message: str = ''):
+    def __init__(self, response: requests.Response, message: str = ""):
         self.response = response
         super(BadStatusCode, self).__init__(message)
 
