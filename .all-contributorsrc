@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "JackKelly",
+      "name": "Jack Kelly",
+      "avatar_url": "https://avatars.githubusercontent.com/u/460756?v=4",
+      "profile": "http://jack-kelly.com",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "pvoutput",
+  "projectOwner": "openclimatefix",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
