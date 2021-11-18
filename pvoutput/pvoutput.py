@@ -138,7 +138,7 @@ class PVOutput:
             pd.DataFrame, one row per search results.  Index is PV system ID.
                 Columns:
                     name,
-                    system_AC_capacity_W,
+                    system_DC_capacity_W,
                     address,  # If `include_country` is True then address is
                               # 'country> <postcode>',
                               # else address is '<postcode>'.
@@ -162,7 +162,7 @@ class PVOutput:
             StringIO(pv_systems_text),
             names=[
                 "name",
-                "system_AC_capacity_W",
+                "system_DC_capacity_W",
                 "address",
                 "orientation",
                 "num_outputs",
@@ -348,7 +348,7 @@ class PVOutput:
         Returns:
             pd.Series.  Index is:
                 name,
-                system_AC_capacity_W,
+                system_DC_capacity_W,
                 address,
                 num_panels,
                 panel_capacity_W_each,
@@ -387,7 +387,7 @@ class PVOutput:
             lineterminator=";",
             names=[
                 "name",
-                "system_AC_capacity_W",
+                "system_DC_capacity_W",
                 "address",
                 "num_panels",
                 "panel_capacity_W_each",

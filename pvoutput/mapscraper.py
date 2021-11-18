@@ -42,7 +42,7 @@ def get_pv_systems_for_country(
         max_pages: The maximum number of search pages to scrape.
 
     Returns: pd.DataFrame with index system_id (int) and these columns:
-        name, system_AC_capacity_W, panel, inverter, address, orientation,
+        name, system_DC_capacity_W, panel, inverter, address, orientation,
         array_tilt_degrees, shade, timeseries_duration,
         total_energy_gen_Wh, average_daily_energy_gen_Wh
         average_efficiency_kWh_per_kW
@@ -179,7 +179,7 @@ def _process_metadata(soup: BeautifulSoup, return_constituents=False) -> pd.Data
 
     df = pd.concat(pv_systems_metadata, axis="columns")
     df = _convert_metadata_cols_to_numeric(df)
-    df["system_AC_capacity_W"] = df["capacity_kW"] * 1e3
+    df["system_DC_capacity_W"] = df["capacity_kW"] * 1e3
     del df["capacity_kW"]
     if return_constituents:
         pv_systems_metadata.append(df)
