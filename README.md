@@ -25,6 +25,10 @@ api_key: <API key from PVOutput.org>
 system_id: <SystemID from PVOutput.org>
 ```
 
+The default location of the `.pvoutput.yml` is the user's home directory, expanded from `~`. This can be overridden by setting the `PVOUTPUT_CONFIG` environment variable.
+
+e.g. `export PVOUTPUT_CONFIG="/my/preferred/location/.pvoutput.yml"`
+
 ### API quotas and paid subscriptions
 
 * For free, PVOutput.org gives you 60 API requests per hour.  Per request, you can download one day of data for one PV system.  (See PVOutput's docs for more info about [rate limits](https://pvoutput.org/help/api_specification.html#rate-limits).)
