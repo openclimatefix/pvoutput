@@ -1,0 +1,10 @@
+pytest
+pyyaml
+tables
+numpy
+pandas>=1.0.0
+matplotlib
+jupyter
+urllib3
+requests
+beautifulsoup4

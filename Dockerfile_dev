@@ -1,0 +1,27 @@
+FROM python:3.9
+
+WORKDIR /pvoutput
+
+RUN apt-get -qq update \
+    && apt-get -qq install -y --no-install-recommends \
+        git \
+        curl \
+        git \
+        wget \
+        libproj-dev \
+        proj-data \
+        proj-bin \
+        libgeos-dev \
+        libgdal-dev \
+        python3-gdal \
+        gdal-bin \
+    && apt-get autoclean && apt-get autoremove \
+    > /dev/null
+
+COPY requirements.txt /pvoutput/requirements.txt
+
+RUN pip install -U pip && pip install --no-cache-dir -r /pvoutput/requirements.txt > /dev/null
+
+EXPOSE 1234
+
+CMD ["jupyter", "notebook", "--allow-root", "--ip", "0.0.0.0", "--port", "1234", "--no-browser"]
