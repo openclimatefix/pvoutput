@@ -1,6 +1,6 @@
 [![Build Status](https://api.travis-ci.com/openclimatefix/pvoutput.svg)](https://travis-ci.com/openclimatefix/pvoutput/)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Download historical solar photovoltaic data from [PVOutput.org](https://pvoutput.org).
@@ -54,6 +54,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/ssmssam"><img src="https://avatars.githubusercontent.com/u/39378848?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sam Murphy-Sugrue</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=ssmssam" title="Code">💻</a></td>
     <td align="center"><a href="https://gabrieltseng.github.io/"><img src="https://avatars.githubusercontent.com/u/29063740?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Gabriel Tseng</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=gabrieltseng" title="Code">💻</a></td>
     <td align="center"><a href="http://www.solar.sheffield.ac.uk/"><img src="https://avatars.githubusercontent.com/u/12187350?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jamie Taylor</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=JamieTaylor-TUOS" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/peterdudfield"><img src="https://avatars.githubusercontent.com/u/34686298?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Peter Dudfield</b></sub></a><br /><a href="#infra-peterdudfield" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
   </tr>
 </table>
 
