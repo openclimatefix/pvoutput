@@ -19,5 +19,3 @@ Columns:
 - `datetime_of_API_request`: The datetime at which we sent the API request.  Will be `NaT` for data retrieved before about 2019-08-06 13:00 UTC.
 - `query_date`: The date (in localtime to the PV system) used in the query to the PVOutput.org API.  Will be `NaT` for data retrieved before about 2019-08-06 13:00 UTC.
 - ... other columns contain data from PVOutput.org
-
-

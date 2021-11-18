@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from datetime import date, timedelta, datetime
-from typing import Iterable, Union, List
-import pandas as pd
+from datetime import date, datetime, timedelta
+from typing import Iterable, List, Union
+
 import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -24,9 +25,11 @@ class DateRange:
         return pd.date_range(self.start_date, self.end_date, freq="D").date
 
     def total_days(self) -> int:
-        return np.timedelta64(
-            self.end_date - self.start_date).astype(
-                'timedelta64[D]').astype(np.float32)
+        return (
+            np.timedelta64(self.end_date - self.start_date)
+            .astype("timedelta64[D]")
+            .astype(np.float32)
+        )
 
     def split_into_years(self) -> List:
         duration = self.end_date - self.start_date
@@ -59,9 +62,7 @@ def get_date_range_list(dates: Iterable[date]) -> List[DateRange]:
     start_i = 0
     date_range_list = []
     for end_i in location_of_gaps:
-        date_range = DateRange(
-            start_date=dates[start_i],
-            end_date=dates[end_i])
+        date_range = DateRange(start_date=dates[start_i], end_date=dates[end_i])
         date_range_list.append(date_range)
         start_i = end_i + 1
 
@@ -77,8 +78,7 @@ def safe_convert_to_date(dt: Union[datetime, date, str]) -> date:
         return dt
 
 
-def merge_date_ranges_to_years(
-        date_ranges: Iterable[DateRange]) -> List[DateRange]:
+def merge_date_ranges_to_years(date_ranges: Iterable[DateRange]) -> List[DateRange]:
     """
     Args:
         date_ranges: List of DateRanges, in ascending chronological order.

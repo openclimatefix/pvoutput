@@ -1,9 +1,11 @@
+from datetime import date
 from io import StringIO
-import pytest
+
 import numpy as np
 import pandas as pd
+import pytest
+
 from pvoutput import pvoutput
-from datetime import date
 
 
 def test_date_to_pvoutput_str():
@@ -72,15 +74,12 @@ datetime,cumulative_energy_gen_Wh,instantaneous_power_gen_W,temperature_C,voltag
 
     df = pvoutput._process_batch_status(response_text)
     correct_df = pd.read_csv(
-        StringIO(correct_interpretation_csv),
-        parse_dates=['datetime'],
-        index_col='datetime'
+        StringIO(correct_interpretation_csv), parse_dates=["datetime"], index_col="datetime"
     )
     pd.testing.assert_frame_equal(df, correct_df)
 
-    empty_df = pvoutput._process_batch_status('')
-    assert empty_df.empty, (
-        'DataFrame should be empty but it was:\n{}\n'.format(empty_df))
+    empty_df = pvoutput._process_batch_status("")
+    assert empty_df.empty, "DataFrame should be empty but it was:\n{}\n".format(empty_df)
 
     with pytest.raises(NotImplementedError):
-        pvoutput._process_batch_status('20140330;07:35,2,24,2,24,23.1,230.3')
+        pvoutput._process_batch_status("20140330;07:35,2,24,2,24,23.1,230.3")
