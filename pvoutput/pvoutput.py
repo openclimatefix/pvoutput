@@ -1,25 +1,36 @@
-import warnings
-import os
-from io import StringIO
-import time
 import logging
-from typing import Dict, Union, Optional, Iterable, List
-from datetime import datetime, timedelta, date
-import requests
-import tables
-import numpy as np
-import pandas as pd
+import os
+import time
+import warnings
+from datetime import date, datetime, timedelta
+from io import StringIO
+from typing import Dict, Iterable, List, Optional, Union
 from urllib.parse import urljoin
 
-from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
-from pvoutput.utils import _get_response, _get_param_from_config_file
-from pvoutput.utils import _print_and_log, get_date_ranges_to_download
-from pvoutput.utils import system_id_to_hdf_key, sort_and_de_dupe_pv_system
-from pvoutput.consts import ONE_DAY, PV_OUTPUT_DATE_FORMAT, BASE_URL
-from pvoutput.consts import CONFIG_FILENAME, RATE_LIMIT_PARAMS_TO_API_HEADERS
-from pvoutput.daterange import DateRange, merge_date_ranges_to_years
+import numpy as np
+import pandas as pd
+import requests
+import tables
 
-_LOG = logging.getLogger('pvoutput')
+from pvoutput.consts import (
+    BASE_URL,
+    CONFIG_FILENAME,
+    ONE_DAY,
+    PV_OUTPUT_DATE_FORMAT,
+    RATE_LIMIT_PARAMS_TO_API_HEADERS,
+)
+from pvoutput.daterange import DateRange, merge_date_ranges_to_years
+from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
+from pvoutput.utils import (
+    _get_param_from_config_file,
+    _get_response,
+    _print_and_log,
+    get_date_ranges_to_download,
+    sort_and_de_dupe_pv_system,
+    system_id_to_hdf_key,
+)
+
+_LOG = logging.getLogger("pvoutput")
 
 
 class PVOutput:
@@ -32,12 +43,14 @@ class PVOutput:
         rate_limit_reset_time
         data_service_url
     """
-    def __init__(self,
-                 api_key: str = None,
-                 system_id: str = None,
-                 config_filename: Optional[str] = CONFIG_FILENAME,
-                 data_service_url: Optional[str] = None
-                 ):
+
+    def __init__(
+        self,
+        api_key: str = None,
+        system_id: str = None,
+        config_filename: Optional[str] = CONFIG_FILENAME,
+        data_service_url: Optional[str] = None,
+    ):
         """
         Args:
             api_key: Your API key from PVOutput.org.
@@ -58,20 +71,21 @@ class PVOutput:
         self.data_service_url = data_service_url
 
         # Set from config file if None
-        for param_name in ['api_key', 'system_id']:
+        for param_name in ["api_key", "system_id"]:
             if getattr(self, param_name) is None:
                 try:
                     param_value_from_config = _get_param_from_config_file(
-                        param_name, config_filename)
+                        param_name, config_filename
+                    )
                 except Exception as e:
                     msg = (
-                        'Error loading configuration parameter {param_name}'
-                        ' from config file {filename}.  Either pass'
-                        ' {param_name} into PVOutput constructor, or create'
-                        ' config file {filename}.  {exception}'.format(
-                            param_name=param_name,
-                            filename=CONFIG_FILENAME,
-                            exception=e))
+                        "Error loading configuration parameter {param_name}"
+                        " from config file {filename}.  Either pass"
+                        " {param_name} into PVOutput constructor, or create"
+                        " config file {filename}.  {exception}".format(
+                            param_name=param_name, filename=CONFIG_FILENAME, exception=e
+                        )
+                    )
                     print(msg)
                     _LOG.exception(msg)
                     raise
@@ -83,23 +97,25 @@ class PVOutput:
         if self.data_service_url is None:
             try:
                 self.data_service_url = _get_param_from_config_file(
-                    'data_service_url', config_filename)
+                    "data_service_url", config_filename
+                )
             except KeyError:
                 pass
             except FileNotFoundError:
                 pass
 
         if self.data_service_url is not None:
-            if not self.data_service_url.strip('/').endswith('.org'):
+            if not self.data_service_url.strip("/").endswith(".org"):
                 raise ValueError("data_service_url must end in '.org'")
 
-    def search(self,
-               query: str,
-               lat: Optional[float] = None,
-               lon: Optional[float] = None,
-               include_country: bool = True,
-               **kwargs
-               ) -> pd.DataFrame:
+    def search(
+        self,
+        query: str,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        include_country: bool = True,
+        **kwargs
+    ) -> pd.DataFrame:
         """Search for PV systems.
 
         Some quirks of the PVOutput.org API:
@@ -135,13 +151,12 @@ class PVOutput:
                     latitude,
                     longitude
         """
-        api_params = {'q': query, 'country': int(include_country)}
+        api_params = {"q": query, "country": int(include_country)}
 
         if lat is not None and lon is not None:
-            api_params['ll'] = '{:f},{:f}'.format(lat, lon)
+            api_params["ll"] = "{:f},{:f}".format(lat, lon)
 
-        pv_systems_text = self._api_query(
-            service='search', api_params=api_params, **kwargs)
+        pv_systems_text = self._api_query(service="search", api_params=api_params, **kwargs)
 
         pv_systems = pd.read_csv(
             StringIO(pv_systems_text),
@@ -162,12 +177,9 @@ class PVOutput:
 
         return pv_systems
 
-    def get_status(self,
-                   pv_system_id: int,
-                   date: Union[str, datetime],
-                   historic: bool = True,
-                   **kwargs
-                   ) -> pd.DataFrame:
+    def get_status(
+        self, pv_system_id: int, date: Union[str, datetime], historic: bool = True, **kwargs
+    ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
 
         The returned DataFrame will be empty if the PVOutput API
@@ -192,68 +204,72 @@ class PVOutput:
                     temperature_C,
                     voltage
         """
-        _LOG.info(
-            "system_id %d: Requesting system status for %s",
-            pv_system_id, date)
+        _LOG.info("system_id %d: Requesting system status for %s", pv_system_id, date)
         date = date_to_pvoutput_str(date)
         _check_date(date)
 
         api_params = {
-            'd': date,  # date, YYYYMMDD, localtime of the PV system
-            'h': int(historic == True),  # We want historical data.
-            'limit': 288,  # API limit is 288 (num of 5-min periods per day).
-            'ext': 0,  # Extended data; we don't want extended data.
-            'sid1': pv_system_id  # SystemID.
+            "d": date,  # date, YYYYMMDD, localtime of the PV system
+            "h": int(historic == True),  # We want historical data.
+            "limit": 288,  # API limit is 288 (num of 5-min periods per day).
+            "ext": 0,  # Extended data; we don't want extended data.
+            "sid1": pv_system_id,  # SystemID.
         }
 
         try:
             pv_system_status_text = self._api_query(
-                service='getstatus', api_params=api_params, **kwargs)
+                service="getstatus", api_params=api_params, **kwargs
+            )
         except NoStatusFound:
-            _LOG.info(
-                'system_id %d: No status found for date %s',
-                pv_system_id, date)
+            _LOG.info("system_id %d: No status found for date %s", pv_system_id, date)
             pv_system_status_text = ""
 
         # See https://pvoutput.org/help.html#api-getstatus but make sure
         # you read the 'History Query' subsection, as a historical query
         # has slightly different return columns compared to a non-historical
         # query!
-        columns = [
-            'cumulative_energy_gen_Wh',
-            'energy_efficiency_kWh_per_kW',
-            'instantaneous_power_gen_W',
-            'average_power_gen_W',
-            'power_gen_normalised',
-            'energy_consumption_Wh',
-            'power_demand_W',
-            'temperature_C',
-            'voltage'] if historic else [
-            'cumulative_energy_gen_Wh',
-            'instantaneous_power_gen_W',
-            'energy_consumption_Wh',
-            'power_demand_W',
-            'power_gen_normalised',
-            'temperature_C',
-            'voltage']
+        columns = (
+            [
+                "cumulative_energy_gen_Wh",
+                "energy_efficiency_kWh_per_kW",
+                "instantaneous_power_gen_W",
+                "average_power_gen_W",
+                "power_gen_normalised",
+                "energy_consumption_Wh",
+                "power_demand_W",
+                "temperature_C",
+                "voltage",
+            ]
+            if historic
+            else [
+                "cumulative_energy_gen_Wh",
+                "instantaneous_power_gen_W",
+                "energy_consumption_Wh",
+                "power_demand_W",
+                "power_gen_normalised",
+                "temperature_C",
+                "voltage",
+            ]
+        )
 
         pv_system_status = pd.read_csv(
             StringIO(pv_system_status_text),
-            lineterminator=';',
-            names=['date', 'time'] + columns,
-            parse_dates={'datetime': ['date', 'time']},
-            index_col=['datetime'],
-            dtype={col: np.float64 for col in columns}
+            lineterminator=";",
+            names=["date", "time"] + columns,
+            parse_dates={"datetime": ["date", "time"]},
+            index_col=["datetime"],
+            dtype={col: np.float64 for col in columns},
         ).sort_index()
 
         return pv_system_status
 
-    def get_batch_status(self,
-                         pv_system_id: int,
-                         date_to: Optional[Union[str, datetime]] = None,
-                         max_retries: Optional[int] = 1000,
-                         **kwargs
-                         ) -> Union[None, pd.DataFrame]:
+    def get_batch_status(
+        self,
+        pv_system_id: int,
+        date_to: Optional[Union[str, datetime]] = None,
+        max_retries: Optional[int] = 1000,
+        **kwargs
+    ) -> Union[None, pd.DataFrame]:
         """Get batch PV system status (e.g. power generation).
 
         The returned DataFrame will be empty if the PVOutput API
@@ -290,32 +306,30 @@ class PVOutput:
                     temperature_C,
                     voltage
         """
-        api_params = {'sid1': pv_system_id}
+        api_params = {"sid1": pv_system_id}
 
-        _set_date_param(date_to, api_params, 'dt')
+        _set_date_param(date_to, api_params, "dt")
 
         for retry in range(max_retries):
             try:
                 pv_system_status_text = self._api_query(
-                    service='getbatchstatus', api_params=api_params,
-                    use_data_service=True, **kwargs)
+                    service="getbatchstatus", api_params=api_params, use_data_service=True, **kwargs
+                )
             except NoStatusFound:
-                _LOG.info(
-                    'system_id %d: No status found for date_to %s',
-                    pv_system_id, date_to)
+                _LOG.info("system_id %d: No status found for date_to %s", pv_system_id, date_to)
                 pv_system_status_text = ""
                 break
 
-            if 'Accepted 202' in pv_system_status_text:
+            if "Accepted 202" in pv_system_status_text:
                 if retry == 0:
-                    _print_and_log('Request accepted.')
+                    _print_and_log("Request accepted.")
                 if retry < max_retries - 1:
-                    _print_and_log('Sleeping for 1 minute.')
+                    _print_and_log("Sleeping for 1 minute.")
                     time.sleep(60)
                 else:
                     _print_and_log(
-                        'Call get_batch_status again in a minute to see if'
-                        ' results are ready.')
+                        "Call get_batch_status again in a minute to see if" " results are ready."
+                    )
             else:
                 break
         else:
@@ -353,21 +367,22 @@ class PVOutput:
                 secondary_array_tilt_degrees
         """
         pv_metadata_text = self._api_query(
-            service='getsystem',
+            service="getsystem",
             api_params={
-                'array2': 1,  # Provide data about secondary array, if present.
-                'tariffs': 0,
-                'teams': 0,
-                'est': 0,
-                'donations': 0,
-                'sid1': pv_system_id,  # SystemID
-                'ext': 0,  # Include extended data?
+                "array2": 1,  # Provide data about secondary array, if present.
+                "tariffs": 0,
+                "teams": 0,
+                "est": 0,
+                "donations": 0,
+                "sid1": pv_system_id,  # SystemID
+                "ext": 0,  # Include extended data?
             },
-            **kwargs)
+            **kwargs
+        )
 
         pv_metadata = pd.read_csv(
             StringIO(pv_metadata_text),
-            lineterminator=';',
+            lineterminator=";",
             names=[
                 'name',
                 'system_DC_capacity_W',
@@ -390,18 +405,20 @@ class PVOutput:
                 'secondary_orientation',
                 'secondary_array_tilt_degrees'
             ],
-            parse_dates=['install_date'],
-            nrows=1
+            parse_dates=["install_date"],
+            nrows=1,
         ).squeeze()
-        pv_metadata['system_id'] = pv_system_id
+        pv_metadata["system_id"] = pv_system_id
         pv_metadata.name = pv_system_id
         return pv_metadata
 
-    def get_statistic(self,
-                      pv_system_id: int,
-                      date_from: Optional[Union[str, date]] = None,
-                      date_to: Optional[Union[str, date]] = None,
-                      **kwargs) -> pd.DataFrame:
+    def get_statistic(
+        self,
+        pv_system_id: int,
+        date_from: Optional[Union[str, date]] = None,
+        date_to: Optional[Union[str, date]] = None,
+        **kwargs
+    ) -> pd.DataFrame:
         """Get summary stats for a single PV system.
 
         Args:
@@ -428,49 +445,44 @@ class PVOutput:
         if date_from and not date_to:
             date_to = pd.Timestamp.now().date()
         if date_to and not date_from:
-            date_from = pd.Timestamp('1900-01-01').date()
+            date_from = pd.Timestamp("1900-01-01").date()
 
         api_params = {
-                'c': 0,  # consumption and import
-                'crdr': 0,  # credits / debits
-                'sid1': pv_system_id,  # SystemID
-            }
+            "c": 0,  # consumption and import
+            "crdr": 0,  # credits / debits
+            "sid1": pv_system_id,  # SystemID
+        }
 
-        _set_date_param(date_from, api_params, 'df')
-        _set_date_param(date_to, api_params, 'dt')
+        _set_date_param(date_from, api_params, "df")
+        _set_date_param(date_to, api_params, "dt")
 
         try:
             pv_metadata_text = self._api_query(
-                service='getstatistic',
-                api_params=api_params,
-                **kwargs)
+                service="getstatistic", api_params=api_params, **kwargs
+            )
         except NoStatusFound:
             pv_metadata_text = ""
 
         columns = [
-                'total_energy_gen_Wh',
-                'energy_exported_Wh',
-                'average_daily_energy_gen_Wh',
-                'minimum_daily_energy_gen_Wh',
-                'maximum_daily_energy_gen_Wh',
-                'average_efficiency_kWh_per_kW',
-                'num_outputs',
-                'actual_date_from',
-                'actual_date_to',
-                'record_efficiency_kWh_per_kW',
-                'record_efficiency_date'
-            ]
-        date_cols = [
-                'actual_date_from',
-                'actual_date_to',
-                'record_efficiency_date'
-            ]
+            "total_energy_gen_Wh",
+            "energy_exported_Wh",
+            "average_daily_energy_gen_Wh",
+            "minimum_daily_energy_gen_Wh",
+            "maximum_daily_energy_gen_Wh",
+            "average_efficiency_kWh_per_kW",
+            "num_outputs",
+            "actual_date_from",
+            "actual_date_to",
+            "record_efficiency_kWh_per_kW",
+            "record_efficiency_date",
+        ]
+        date_cols = ["actual_date_from", "actual_date_to", "record_efficiency_date"]
         numeric_cols = set(columns) - set(date_cols)
         pv_metadata = pd.read_csv(
             StringIO(pv_metadata_text),
             names=columns,
             dtype={col: np.float32 for col in numeric_cols},
-            parse_dates=date_cols
+            parse_dates=date_cols,
         )
         if pv_metadata.empty:
             data = {col: np.float32(np.NaN) for col in numeric_cols}
@@ -479,19 +491,18 @@ class PVOutput:
         else:
             pv_metadata.index = [pv_system_id]
 
-        pv_metadata['query_date_from'] = (
-            pd.Timestamp(date_from) if date_from else pd.NaT)
-        pv_metadata['query_date_to'] = (
-            pd.Timestamp(date_to) if date_to else pd.Timestamp.now())
+        pv_metadata["query_date_from"] = pd.Timestamp(date_from) if date_from else pd.NaT
+        pv_metadata["query_date_to"] = pd.Timestamp(date_to) if date_to else pd.Timestamp.now()
         return pv_metadata
 
-    def _get_statistic_with_cache(self,
-                                  store_filename: str,
-                                  pv_system_id: int,
-                                  date_from: Optional[Union[str, date]] = None,
-                                  date_to: Optional[Union[str, date]] = None,
-                                  **kwargs
-                                  ) -> pd.Series:
+    def _get_statistic_with_cache(
+        self,
+        store_filename: str,
+        pv_system_id: int,
+        date_from: Optional[Union[str, date]] = None,
+        date_to: Optional[Union[str, date]] = None,
+        **kwargs
+    ) -> pd.Series:
         """Will try to get stats from store_filename['statistics'].  If this
         fails, or if date_to > query_date_to, or if
         date_from < query_date_from, then will call the API.  Note that the aim
@@ -505,33 +516,32 @@ class PVOutput:
             date_to = pd.Timestamp(date_to).date()
 
         def _get_fresh_statistic():
-            _LOG.info('pv_system %d: Getting fresh statistic.', pv_system_id)
+            _LOG.info("pv_system %d: Getting fresh statistic.", pv_system_id)
             stats = self.get_statistic(pv_system_id, **kwargs)
-            with pd.HDFStore(store_filename, mode='a') as store:
+            with pd.HDFStore(store_filename, mode="a") as store:
                 try:
-                    store.remove(key='statistics', where='index=pv_system_id')
+                    store.remove(key="statistics", where="index=pv_system_id")
                 except KeyError:
                     pass
-                store.append(key='statistics', value=stats)
+                store.append(key="statistics", value=stats)
             return stats
 
         try:
-            stats = pd.read_hdf(
-                store_filename,
-                key='statistics',
-                where='index=pv_system_id')
+            stats = pd.read_hdf(store_filename, key="statistics", where="index=pv_system_id")
         except (FileNotFoundError, KeyError):
             return _get_fresh_statistic()
 
         if stats.empty:
             return _get_fresh_statistic()
 
-        query_date_from = stats.iloc[0]['query_date_from']
-        query_date_to = stats.iloc[0]['query_date_to']
+        query_date_from = stats.iloc[0]["query_date_from"]
+        query_date_to = stats.iloc[0]["query_date_to"]
 
-        if (not pd.isnull(date_from) and
-                not pd.isnull(query_date_from) and
-                date_from < query_date_from.date()):
+        if (
+            not pd.isnull(date_from)
+            and not pd.isnull(query_date_from)
+            and date_from < query_date_from.date()
+        ):
             return _get_fresh_statistic()
 
         if not pd.isnull(date_to) and date_to > query_date_to.date():
@@ -540,14 +550,15 @@ class PVOutput:
         return stats
 
     def download_multiple_systems_to_disk(
-            self,
-            system_ids: Iterable[int],
-            start_date: datetime,
-            end_date: datetime,
-            output_filename: str,
-            timezone: Optional[str] = None,
-            min_data_availability: Optional[float] = 0.5,
-            use_get_batch_status_if_available: Optional[bool] = True):
+        self,
+        system_ids: Iterable[int],
+        start_date: datetime,
+        end_date: datetime,
+        output_filename: str,
+        timezone: Optional[str] = None,
+        min_data_availability: Optional[float] = 0.5,
+        use_get_batch_status_if_available: Optional[bool] = True,
+    ):
         """Download multiple PV system IDs to disk.
 
         Data is saved to `output_filename` in HDF5 format.  The exact data
@@ -581,58 +592,54 @@ class PVOutput:
         """
         n = len(system_ids)
         for i, pv_system_id in enumerate(system_ids):
-            _LOG.info('**********************')
-            msg = 'system_id {:d}: {:d} of {:d} ({:%})'.format(
-                pv_system_id, i+1, n, (i+1)/n)
+            _LOG.info("**********************")
+            msg = "system_id {:d}: {:d} of {:d} ({:%})".format(pv_system_id, i + 1, n, (i + 1) / n)
             _LOG.info(msg)
-            print('\r', msg, end='', flush=True)
+            print("\r", msg, end="", flush=True)
 
             # Sorted list of DateRange objects.  For each DateRange,
             # we need to download from start_date to end_date inclusive.
             date_ranges_to_download = get_date_ranges_to_download(
-                output_filename, pv_system_id, start_date, end_date)
+                output_filename, pv_system_id, start_date, end_date
+            )
 
             # How much data is actually available?
             date_ranges_to_download = self._filter_date_range(
-                output_filename,
-                pv_system_id,
-                date_ranges_to_download,
-                min_data_availability)
+                output_filename, pv_system_id, date_ranges_to_download, min_data_availability
+            )
 
             if not date_ranges_to_download:
-                _LOG.info(
-                    "system_id %d: No data left to download :)", pv_system_id)
+                _LOG.info("system_id %d: No data left to download :)", pv_system_id)
                 continue
 
             _LOG.info(
                 "system_id %d: Will download these date ranges: %s",
-                pv_system_id, date_ranges_to_download)
+                pv_system_id,
+                date_ranges_to_download,
+            )
 
             if use_get_batch_status_if_available:
                 if self.data_service_url:
                     self._download_multiple_using_get_batch_status(
-                        output_filename,
-                        pv_system_id,
-                        date_ranges_to_download,
-                        timezone)
+                        output_filename, pv_system_id, date_ranges_to_download, timezone
+                    )
                 else:
-                    raise ValueError('data_service_url is not set!')
+                    raise ValueError("data_service_url is not set!")
             else:
                 self._download_multiple_using_get_status(
-                    output_filename,
-                    pv_system_id,
-                    date_ranges_to_download,
-                    timezone)
+                    output_filename, pv_system_id, date_ranges_to_download, timezone
+                )
 
-    def get_insolation_forecast(self,
-                                date: Union[str, datetime],
-                                pv_system_id: Optional[int] = None,
-                                timezone: Optional[str] = None,
-                                lat: Optional[float] = None,
-                                lon: Optional[float] = None,
-                                **kwargs
-                                ):
-        """ Get Insolation data for a given site, or a given location defined by
+    def get_insolation_forecast(
+        self,
+        date: Union[str, datetime],
+        pv_system_id: Optional[int] = None,
+        timezone: Optional[str] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        **kwargs
+    ):
+        """Get Insolation data for a given site, or a given location defined by
         longitude and latitude. This is the estimated output for the site
         based on ideal weather conditions. Also factors in site age, reducing
         ouput by 1% each year, shade and orientation. Need donation mode enabled.
@@ -654,43 +661,41 @@ class PVOutput:
         date = date_to_pvoutput_str(date)
         _check_date(date, prediction=True)
         api_params = {
-            'd': date,  # date, YYYYMMDD, localtime of the PV system
-            'sid1': pv_system_id,  # SystemID.
-            'tz': timezone # defaults to configured timezone of system otherwise GMT
+            "d": date,  # date, YYYYMMDD, localtime of the PV system
+            "sid1": pv_system_id,  # SystemID.
+            "tz": timezone,  # defaults to configured timezone of system otherwise GMT
         }
         if lat is not None and lon is not None:
-            api_params['ll'] = '{:f},{:f}'.format(lat, lon)
+            api_params["ll"] = "{:f},{:f}".format(lat, lon)
 
         try:
             pv_insolation_text = self._api_query(
-                service='getinsolation', api_params=api_params, **kwargs)
+                service="getinsolation", api_params=api_params, **kwargs
+            )
         except NoStatusFound:
-            _LOG.info(
-                'system_id %d: No status found for date %s',
-                pv_system_id, date)
+            _LOG.info("system_id %d: No status found for date %s", pv_system_id, date)
             pv_insolation_text = ""
 
-        columns = [
-            'predicted_power_gen_W',
-            'predicted_cumulative_energy_gen_Wh'
-            ]
+        columns = ["predicted_power_gen_W", "predicted_cumulative_energy_gen_Wh"]
         pv_insolation = pd.read_csv(
             StringIO(pv_insolation_text),
-            lineterminator=';',
-            names=['time'] + columns,
-            dtype={col: np.float64 for col in columns}
+            lineterminator=";",
+            names=["time"] + columns,
+            dtype={col: np.float64 for col in columns},
         ).sort_index()
-        pv_insolation.index = pd.to_datetime(date + ' ' + pv_insolation.time,
-                                             format= '%Y-%m-%d %H:%M')
-        pv_insolation.drop('time', axis=1, inplace=True)
+        pv_insolation.index = pd.to_datetime(
+            date + " " + pv_insolation.time, format="%Y-%m-%d %H:%M"
+        )
+        pv_insolation.drop("time", axis=1, inplace=True)
         return pv_insolation
 
-    def _filter_date_range(self,
-                           store_filename: str,
-                           system_id: int,
-                           date_ranges: Iterable[DateRange],
-                           min_data_availability: Optional[float] = 0.5
-                           ) -> List[DateRange]:
+    def _filter_date_range(
+        self,
+        store_filename: str,
+        system_id: int,
+        date_ranges: Iterable[DateRange],
+        min_data_availability: Optional[float] = 0.5,
+    ) -> List[DateRange]:
         """Check getstatistic to see if system_id has data for all date ranges.
 
         Args:
@@ -708,24 +713,23 @@ class PVOutput:
             store_filename,
             system_id,
             date_to=date_ranges[-1].end_date,
-            wait_if_rate_limit_exceeded=True
+            wait_if_rate_limit_exceeded=True,
         ).squeeze()
 
-        if (pd.isnull(stats['actual_date_from']) or
-                pd.isnull(stats['actual_date_to'])):
-            _LOG.info('system_id %d: Stats say there is no data!', system_id)
+        if pd.isnull(stats["actual_date_from"]) or pd.isnull(stats["actual_date_to"]):
+            _LOG.info("system_id %d: Stats say there is no data!", system_id)
             return []
 
-        timeseries_date_range = DateRange(
-            stats['actual_date_from'], stats['actual_date_to'])
+        timeseries_date_range = DateRange(stats["actual_date_from"], stats["actual_date_to"])
 
-        data_availability = (
-            stats['num_outputs'] / (timeseries_date_range.total_days() + 1))
+        data_availability = stats["num_outputs"] / (timeseries_date_range.total_days() + 1)
 
         if data_availability < min_data_availability:
             _LOG.info(
-                'system_id %d: Data availability too low!  Only %.0f %%.',
-                system_id, data_availability * 100)
+                "system_id %d: Data availability too low!  Only %.0f %%.",
+                system_id,
+                data_availability * 100,
+            )
             return []
 
         new_date_ranges = []
@@ -736,105 +740,103 @@ class PVOutput:
         return new_date_ranges
 
     def _download_multiple_using_get_batch_status(
-            self,
-            output_filename,
-            pv_system_id,
-            date_ranges_to_download,
-            timezone: Optional[str] = None
-            ):
+        self, output_filename, pv_system_id, date_ranges_to_download, timezone: Optional[str] = None
+    ):
         years = merge_date_ranges_to_years(date_ranges_to_download)
         dates_to = [year.end_date for year in years]
         total_rows = self._download_multiple_worker(
-            output_filename, pv_system_id, dates_to, timezone,
-            use_get_status=False)
+            output_filename, pv_system_id, dates_to, timezone, use_get_status=False
+        )
 
         # Re-load data, sort, remove duplicate indicies, append back
         if total_rows:
-            with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
+            with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
                 sort_and_de_dupe_pv_system(store, pv_system_id)
 
     def _download_multiple_using_get_status(
-            self,
-            output_filename,
-            pv_system_id,
-            date_ranges_to_download,
-            timezone: Optional[str] = None
-            ):
+        self, output_filename, pv_system_id, date_ranges_to_download, timezone: Optional[str] = None
+    ):
         for date_range in date_ranges_to_download:
             dates = date_range.date_range()
             self._download_multiple_worker(
-                output_filename, pv_system_id, dates, timezone,
-                use_get_status=True)
+                output_filename, pv_system_id, dates, timezone, use_get_status=True
+            )
 
-    def _download_multiple_worker(self,
-                                  output_filename,
-                                  pv_system_id,
-                                  dates,
-                                  timezone, use_get_status) -> int:
+    def _download_multiple_worker(
+        self, output_filename, pv_system_id, dates, timezone, use_get_status
+    ) -> int:
         """
         Returns:
             total number of rows downloaded
         """
         total_rows = 0
         for date_to_load in dates:
-            _LOG.info('system_id %d: Requesting date: %s',
-                      pv_system_id, date_to_load)
+            _LOG.info("system_id %d: Requesting date: %s", pv_system_id, date_to_load)
             datetime_of_api_request = pd.Timestamp.utcnow()
             if use_get_status:
                 timeseries = self.get_status(
-                    pv_system_id, date_to_load,
-                    wait_if_rate_limit_exceeded=True)
+                    pv_system_id, date_to_load, wait_if_rate_limit_exceeded=True
+                )
             else:
-                timeseries = self.get_batch_status(
-                    pv_system_id, date_to=date_to_load)
+                timeseries = self.get_batch_status(pv_system_id, date_to=date_to_load)
             if timeseries.empty:
-                _LOG.info('system_id %d: Got empty timeseries back for %s',
-                          pv_system_id, date_to_load)
+                _LOG.info(
+                    "system_id %d: Got empty timeseries back for %s", pv_system_id, date_to_load
+                )
                 if use_get_status:
                     _append_missing_date_range(
-                        output_filename, pv_system_id,
-                        date_to_load, date_to_load, datetime_of_api_request)
+                        output_filename,
+                        pv_system_id,
+                        date_to_load,
+                        date_to_load,
+                        datetime_of_api_request,
+                    )
                 else:
                     _append_missing_date_range(
-                        output_filename, pv_system_id,
+                        output_filename,
+                        pv_system_id,
                         date_to_load - timedelta(days=365),
                         date_to_load,
-                        datetime_of_api_request)
+                        datetime_of_api_request,
+                    )
             else:
                 total_rows += len(timeseries)
                 timeseries = timeseries.tz_localize(timezone)
                 _LOG.info(
                     "system_id: %d: %d rows retrieved: %s to %s",
-                    pv_system_id, len(timeseries),
-                    timeseries.index[0], timeseries.index[-1])
+                    pv_system_id,
+                    len(timeseries),
+                    timeseries.index[0],
+                    timeseries.index[-1],
+                )
                 if use_get_status:
                     check_pv_system_status(timeseries, date_to_load)
                 else:
                     _record_gaps(
-                        output_filename, pv_system_id, date_to_load,
-                        timeseries, datetime_of_api_request)
-                timeseries[
-                    'datetime_of_API_request'] = datetime_of_api_request
-                timeseries['query_date'] = pd.Timestamp(date_to_load)
+                        output_filename,
+                        pv_system_id,
+                        date_to_load,
+                        timeseries,
+                        datetime_of_api_request,
+                    )
+                timeseries["datetime_of_API_request"] = datetime_of_api_request
+                timeseries["query_date"] = pd.Timestamp(date_to_load)
                 key = system_id_to_hdf_key(pv_system_id)
-                with pd.HDFStore(
-                        output_filename, mode='a', complevel=9) as store:
+                with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
                     with warnings.catch_warnings():
-                        warnings.simplefilter(
-                            'ignore', tables.NaturalNameWarning)
-                        store.append(
-                            key=key, value=timeseries, data_columns=True)
+                        warnings.simplefilter("ignore", tables.NaturalNameWarning)
+                        store.append(key=key, value=timeseries, data_columns=True)
 
-        _LOG.info('system_id %d: %d total rows downloaded',
-                  pv_system_id, total_rows)
+        _LOG.info("system_id %d: %d total rows downloaded", pv_system_id, total_rows)
         return total_rows
 
-    def _api_query(self,
-                   service: str,
-                   api_params: Dict,
-                   wait_if_rate_limit_exceeded: bool = False,
-                   use_data_service: bool = False
-                   ) -> str:
+    def _api_query(
+        self,
+        service: str,
+        api_params: Dict,
+        wait_if_rate_limit_exceeded: bool = False,
+        use_data_service: bool = False,
+    ) -> str:
         """Send API request to PVOutput.org and return content text.
 
         Args:
@@ -848,8 +850,8 @@ class PVOutput:
             RateLimitExceeded
         """
         get_response_func = (
-            self._get_data_service_response if use_data_service else
-            self._get_api_response)
+            self._get_data_service_response if use_data_service else self._get_api_response
+        )
 
         try:
             response = get_response_func(service, api_params)
@@ -860,22 +862,17 @@ class PVOutput:
         try:
             return self._process_api_response(response)
         except RateLimitExceeded:
-            msg = (
-                "PVOutput.org API rate limit exceeded!"
-                "  Rate limit will be reset at {}".format(
-                    self.rate_limit_reset_time))
+            msg = "PVOutput.org API rate limit exceeded!" "  Rate limit will be reset at {}".format(
+                self.rate_limit_reset_time
+            )
             _print_and_log(msg)
             if wait_if_rate_limit_exceeded:
                 self.wait_for_rate_limit_reset()
-                return self._api_query(
-                    service, api_params, wait_if_rate_limit_exceeded=False)
+                return self._api_query(service, api_params, wait_if_rate_limit_exceeded=False)
 
             raise RateLimitExceeded(response, msg)
 
-    def _get_api_response(self,
-                          service: str,
-                          api_params: Dict
-                          ) -> requests.Response:
+    def _get_api_response(self, service: str, api_params: Dict) -> requests.Response:
         """
         Args:
             service: string, e.g. 'search', 'getstatus'
@@ -884,18 +881,16 @@ class PVOutput:
         self._check_api_params()
         # Create request headers
         headers = {
-            'X-Rate-Limit': '1',
-            'X-Pvoutput-Apikey': self.api_key,
-            'X-Pvoutput-SystemId': self.system_id}
+            "X-Rate-Limit": "1",
+            "X-Pvoutput-Apikey": self.api_key,
+            "X-Pvoutput-SystemId": self.system_id,
+        }
 
-        api_url = urljoin(BASE_URL, 'service/r2/{}.jsp'.format(service))
+        api_url = urljoin(BASE_URL, "service/r2/{}.jsp".format(service))
 
         return _get_response(api_url, api_params, headers)
 
-    def _get_data_service_response(self,
-                                   service: str,
-                                   api_params: Dict
-                                   ) -> requests.Response:
+    def _get_data_service_response(self, service: str, api_params: Dict) -> requests.Response:
         """
         Args:
             service: string, e.g. 'getbatchstatus'
@@ -903,37 +898,32 @@ class PVOutput:
         """
         self._check_api_params()
         if self.data_service_url is None:
-            raise ValueError(
-                'data_service_url must be set to use the data service!')
+            raise ValueError("data_service_url must be set to use the data service!")
 
-        headers = {'X-Rate-Limit': '1'}
+        headers = {"X-Rate-Limit": "1"}
         api_params = api_params.copy()
-        api_params['key'] = self.api_key
-        api_params['sid'] = self.system_id
+        api_params["key"] = self.api_key
+        api_params["sid"] = self.system_id
 
-        api_url = urljoin(
-            self.data_service_url, 'service/r2/{}.jsp'.format(service))
+        api_url = urljoin(self.data_service_url, "service/r2/{}.jsp".format(service))
 
         return _get_response(api_url, api_params, headers)
 
     def _check_api_params(self):
         # Check we have relevant login details:
-        for param_name in ['api_key', 'system_id']:
+        for param_name in ["api_key", "system_id"]:
             if getattr(self, param_name) is None:
-                raise ValueError(
-                    'Please set the {} parameter.'.format(param_name))
+                raise ValueError("Please set the {} parameter.".format(param_name))
 
     def _set_rate_limit_params(self, headers):
         for param_name, header_key in RATE_LIMIT_PARAMS_TO_API_HEADERS.items():
             header_value = int(headers[header_key])
             setattr(self, param_name, header_value)
 
-        self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(
-            self.rate_limit_reset_time)
-        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize(
-            'utc')
+        self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(self.rate_limit_reset_time)
+        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
 
-        _LOG.debug('%s', self.rate_limit_info())
+        _LOG.debug("%s", self.rate_limit_info())
 
     def rate_limit_info(self) -> Dict:
         info = {}
@@ -962,9 +952,9 @@ class PVOutput:
             try:
                 response.raise_for_status()
             except Exception as e:
-                msg = (
-                    'Bad status code! Response content = {}. Exception = {}'
-                    .format(response.content, e))
+                msg = "Bad status code! Response content = {}. Exception = {}".format(
+                    response.content, e
+                )
                 _LOG.exception(msg)
                 raise e.__class__(msg)
 
@@ -975,10 +965,9 @@ class PVOutput:
             raise RateLimitExceeded(response=response)
 
         try:
-            content = response.content.decode('latin1').strip()
+            content = response.content.decode("latin1").strip()
         except Exception as e:
-            msg = "Error decoding this string: {}\n{}".format(
-                response.content, e)
+            msg = "Error decoding this string: {}\n{}".format(response.content, e)
             _LOG.exception(msg)
             raise
 
@@ -991,8 +980,9 @@ class PVOutput:
         timedelta_to_wait += timedelta(minutes=3)  # Just for safety
         secs_to_wait = timedelta_to_wait.total_seconds()
         retry_time_utc = utc_now + timedelta_to_wait
-        _print_and_log('Waiting {:.0f} seconds.  Will retry at {}'.format(
-            secs_to_wait, retry_time_utc))
+        _print_and_log(
+            "Waiting {:.0f} seconds.  Will retry at {}".format(secs_to_wait, retry_time_utc)
+        )
         time.sleep(secs_to_wait)
 
 
@@ -1018,9 +1008,11 @@ def _check_date(date: str, prediction=False):
     dt = datetime.strptime(date, PV_OUTPUT_DATE_FORMAT)
     if dt > datetime.now() and not prediction:
         raise ValueError(
-            ''
-            'date should not be in the future.  Got {}.  Current date is {}.'
-            .format(date, datetime.now()))
+            ""
+            "date should not be in the future.  Got {}.  Current date is {}.".format(
+                date, datetime.now()
+            )
+        )
 
 
 def _set_date_param(dt, api_params, key):
@@ -1030,8 +1022,7 @@ def _set_date_param(dt, api_params, key):
         api_params[key] = dt
 
 
-def check_pv_system_status(pv_system_status: pd.DataFrame,
-                           requested_date: date):
+def check_pv_system_status(pv_system_status: pd.DataFrame, requested_date: date):
     """Checks the DataFrame returned by get_pv_system_status.
 
     Args:
@@ -1042,15 +1033,15 @@ def check_pv_system_status(pv_system_status: pd.DataFrame,
         ValueError if the DataFrame is incorrect.
     """
     if not isinstance(pv_system_status, pd.DataFrame):
-        raise ValueError('pv_system_status must be a dataframe')
+        raise ValueError("pv_system_status must be a dataframe")
     if not pv_system_status.empty:
         index = pv_system_status.index
         for d in [index[0], index[-1]]:
             if not requested_date <= d.date() <= requested_date + ONE_DAY:
                 raise ValueError(
-                    'A date in the index is outside the expected range.'
-                    ' Date from index={}, requested_date={}'
-                    .format(d, requested_date))
+                    "A date in the index is outside the expected range."
+                    " Date from index={}, requested_date={}".format(d, requested_date)
+                )
 
 
 def _process_batch_status(pv_system_status_text):
@@ -1059,89 +1050,81 @@ def _process_batch_status(pv_system_status_text):
     # PVOutput uses a non-standard format for the data.  The text
     # needs some processing before it can be read as a CSV.
     processed_lines = []
-    for line in pv_system_status_text.split('\n'):
-        line_sections = line.split(';')
+    for line in pv_system_status_text.split("\n"):
+        line_sections = line.split(";")
         date = line_sections[0]
         time_and_data = line_sections[1:]
         processed_line = [
-            '{date},{payload}'.format(date=date, payload=payload)
-            for payload in time_and_data]
+            "{date},{payload}".format(date=date, payload=payload) for payload in time_and_data
+        ]
         processed_lines.extend(processed_line)
 
     if processed_lines:
         first_line = processed_lines[0]
-        num_cols = len(first_line.split(','))
+        num_cols = len(first_line.split(","))
         if num_cols >= 8:
-            raise NotImplementedError(
-                'Handling of consumption data is not implemented!')
+            raise NotImplementedError("Handling of consumption data is not implemented!")
 
-    processed_text = '\n'.join(processed_lines)
+    processed_text = "\n".join(processed_lines)
     del processed_lines
 
-    columns = [
-        'cumulative_energy_gen_Wh',
-        'instantaneous_power_gen_W',
-        'temperature_C',
-        'voltage']
+    columns = ["cumulative_energy_gen_Wh", "instantaneous_power_gen_W", "temperature_C", "voltage"]
 
     pv_system_status = pd.read_csv(
         StringIO(processed_text),
-        names=['date', 'time'] + columns,
-        parse_dates={'datetime': ['date', 'time']},
-        index_col=['datetime'],
-        dtype={col: np.float64 for col in columns}
+        names=["date", "time"] + columns,
+        parse_dates={"datetime": ["date", "time"]},
+        index_col=["datetime"],
+        dtype={col: np.float64 for col in columns},
     ).sort_index()
 
     return pv_system_status
 
 
-def _append_missing_date_range(output_filename, pv_system_id,
-                               missing_start_date, missing_end_date,
-                               datetime_of_api_request):
+def _append_missing_date_range(
+    output_filename, pv_system_id, missing_start_date, missing_end_date, datetime_of_api_request
+):
 
     data = {
-        'missing_start_date_PV_localtime': pd.Timestamp(missing_start_date),
-        'missing_end_date_PV_localtime': pd.Timestamp(missing_end_date),
-        'datetime_of_API_request': datetime_of_api_request,
+        "missing_start_date_PV_localtime": pd.Timestamp(missing_start_date),
+        "missing_end_date_PV_localtime": pd.Timestamp(missing_end_date),
+        "datetime_of_API_request": datetime_of_api_request,
     }
     new_missing_date_range = pd.DataFrame(data, index=[pv_system_id])
-    new_missing_date_range.index.name = 'pv_system_id'
-    _LOG.info('system_id %d: Recording missing date range from %s to %s',
-              pv_system_id, missing_start_date, missing_end_date)
-    with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
-        store.append(
-            key='missing_dates',
-            value=new_missing_date_range,
-            data_columns=True)
+    new_missing_date_range.index.name = "pv_system_id"
+    _LOG.info(
+        "system_id %d: Recording missing date range from %s to %s",
+        pv_system_id,
+        missing_start_date,
+        missing_end_date,
+    )
+    with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
+        store.append(key="missing_dates", value=new_missing_date_range, data_columns=True)
 
 
-def _record_gaps(output_filename, pv_system_id, date_to, timeseries,
-                 datetime_of_api_request):
+def _record_gaps(output_filename, pv_system_id, date_to, timeseries, datetime_of_api_request):
     dates_of_data = (
-        timeseries['instantaneous_power_gen_W'].dropna()
-        .resample('D').mean().dropna().index.date)
-    dates_requested = pd.date_range(
-        date_to - timedelta(days=365),
-        date_to,
-        freq='D').date
+        timeseries["instantaneous_power_gen_W"].dropna().resample("D").mean().dropna().index.date
+    )
+    dates_requested = pd.date_range(date_to - timedelta(days=365), date_to, freq="D").date
     missing_dates = set(dates_requested) - set(dates_of_data)
-    missing_date_ranges = _convert_consecutive_dates_to_date_ranges(
-        list(missing_dates))
-    _LOG.info('system_id %d: %d missing date ranges found: \n%s',
-              pv_system_id, len(missing_date_ranges), missing_date_ranges)
+    missing_date_ranges = _convert_consecutive_dates_to_date_ranges(list(missing_dates))
+    _LOG.info(
+        "system_id %d: %d missing date ranges found: \n%s",
+        pv_system_id,
+        len(missing_date_ranges),
+        missing_date_ranges,
+    )
     if len(missing_date_ranges) == 0:
         return
     # Convert to from date objects to pd.Timestamp objects, because HDF5
     # doesn't like to store date objects.
-    missing_date_ranges = missing_date_ranges.astype('datetime64')
-    missing_date_ranges['pv_system_id'] = pv_system_id
-    missing_date_ranges['datetime_of_API_request'] = datetime_of_api_request
-    missing_date_ranges.set_index('pv_system_id', inplace=True)
-    with pd.HDFStore(output_filename, mode='a', complevel=9) as store:
-        store.append(
-            key='missing_dates',
-            value=missing_date_ranges,
-            data_columns=True)
+    missing_date_ranges = missing_date_ranges.astype("datetime64")
+    missing_date_ranges["pv_system_id"] = pv_system_id
+    missing_date_ranges["datetime_of_API_request"] = datetime_of_api_request
+    missing_date_ranges.set_index("pv_system_id", inplace=True)
+    with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
+        store.append(key="missing_dates", value=missing_date_ranges, data_columns=True)
 
 
 def _convert_consecutive_dates_to_date_ranges(missing_dates):
@@ -1149,21 +1132,24 @@ def _convert_consecutive_dates_to_date_ranges(missing_dates):
     missing_dates = np.sort(np.unique(missing_dates))
     if len(missing_dates) == 0:
         return pd.DataFrame(new_missing)
-    
-    gaps = np.diff(missing_dates).astype('timedelta64[D]').astype(int) > 1
+
+    gaps = np.diff(missing_dates).astype("timedelta64[D]").astype(int) > 1
     gaps = np.where(gaps)[0]
 
     start_date = missing_dates[0]
     for gap_i in gaps:
         end_date = missing_dates[gap_i]
-        new_missing.append({
-            'missing_start_date_PV_localtime': start_date,
-            'missing_end_date_PV_localtime': end_date})
-        start_date = missing_dates[gap_i+1]
+        new_missing.append(
+            {
+                "missing_start_date_PV_localtime": start_date,
+                "missing_end_date_PV_localtime": end_date,
+            }
+        )
+        start_date = missing_dates[gap_i + 1]
 
     end_date = missing_dates[-1]
-    new_missing.append({
-        'missing_start_date_PV_localtime': start_date,
-        'missing_end_date_PV_localtime': end_date})
+    new_missing.append(
+        {"missing_start_date_PV_localtime": start_date, "missing_end_date_PV_localtime": end_date}
+    )
 
     return pd.DataFrame(new_missing)
