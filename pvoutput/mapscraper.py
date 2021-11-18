@@ -179,8 +179,8 @@ def _process_metadata(soup: BeautifulSoup, return_constituents=False) -> pd.Data
 
     df = pd.concat(pv_systems_metadata, axis="columns")
     df = _convert_metadata_cols_to_numeric(df)
-    df['system_DC_capacity_W'] = df['capacity_kW'] * 1E3
-    del df['capacity_kW']
+    df["system_DC_capacity_W"] = df["capacity_kW"] * 1e3
+    del df["capacity_kW"]
     if return_constituents:
         pv_systems_metadata.append(df)
         return tuple(pv_systems_metadata)
