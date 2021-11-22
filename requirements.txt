@@ -1,7 +1,14 @@
+pyproj
+pyshp
+shapely
+cython>0.15.1
+cartopy
+geopandas
 pytest
 pyyaml
 tables
-pandas
+numpy
+pandas>=1.0.0
 matplotlib
 jupyter
 urllib3
