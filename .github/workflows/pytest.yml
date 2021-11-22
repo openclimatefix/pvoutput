@@ -1,13 +1,6 @@
-name: Integration Test
+name: Python package
+
 on: [push]
 jobs:
-  run-pytest:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2.4.0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-      - name: Run Test
-        run: |
-          $CONDA/bin/conda env update --file environment.yml --name base 
-          $CONDA/bin/pytest
+  call-run-python-tests:
+    uses: openclimatefix/.github/.github/workflows/python-test.yml@main
