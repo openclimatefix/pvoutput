@@ -4,6 +4,7 @@ from datetime import date
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from pvoutput import utils
 from pvoutput.daterange import DateRange
@@ -31,6 +32,7 @@ def test_get_system_ids_in_store():
     np.testing.assert_array_equal(system_ids, [PV_SYSTEM])
 
 
+@pytest.mark.skip("Issue #69")
 def test_get_date_ranges_to_download():
     date_ranges = utils.get_date_ranges_to_download(TEST_HDF, PV_SYSTEM, "2018-01-01", "2019-01-10")
     # 2018-01-02 and 2018-01-03 are already known to be missing.

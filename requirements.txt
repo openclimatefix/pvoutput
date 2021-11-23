@@ -1,0 +1,9 @@
+pytest
+pyyaml
+tables
+pandas
+matplotlib
+jupyter
+urllib3
+requests
+beautifulsoup4
