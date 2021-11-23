@@ -88,6 +88,7 @@ def test_pv_system_size_metadata(get_function_dict, get_test_dict_of_dfs):
     )
 
 
+@pytest.mark.skip("Issue #69")
 def test_process_output_col(get_function_dict, get_test_dict_of_dfs):
     assert (
         compare_function_output_to_pickle(
@@ -97,6 +98,7 @@ def test_process_output_col(get_function_dict, get_test_dict_of_dfs):
     )
 
 
+@pytest.mark.skip("Issue #69")
 def test_process_generation_and_average_cols(get_function_dict, get_test_dict_of_dfs):
     assert (
         compare_function_output_to_pickle(
@@ -115,6 +117,7 @@ def test_process_efficiency_col(get_function_dict, get_test_dict_of_dfs):
     )
 
 
+@pytest.mark.skip("Issue #69")
 def test_process_metadata(get_function_dict, get_test_dict_of_dfs):
     assert (
         compare_function_output_to_pickle(
