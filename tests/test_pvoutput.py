@@ -37,14 +37,14 @@ def test_get_search(real_configuration):
     pv = pvoutput.PVOutput(config_filename=real_configuration)
     r = pv.search(query="5km", lat=52.0668589, lon=-1.3484038)
     assert len(r) == 20
-    assert "system_id" in r.columns
+    assert "system_id" in r.index.name
     assert "latitude" in r.columns
     assert "longitude" in r.columns
 
 
 def test_get_status(real_configuration):
     pv = pvoutput.PVOutput(config_filename=real_configuration)
-    pv.get_status(pv_system_id=61190, date="2021-01-01", historic=False)
+    pv.get_status(pv_system_id=47624, date="2022-01-01", historic=False)
 
 
 def test_convert_consecutive_dates_to_date_ranges():
