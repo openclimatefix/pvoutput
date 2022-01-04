@@ -2,17 +2,7 @@ import pickle
 import sys
 
 from pvoutput import mapscraper as ms
-
-
-def get_keys_for_dict():
-    keys = (
-        "pv_system_size_metadata",
-        "process_output_col",
-        "process_generation_and_average_cols",
-        "process_efficiency_col",
-        "process_metadata",
-    )
-    return keys
+from tests.conftest import get_keys_for_dict
 
 
 def save_pickle_test_file(file, filename):
