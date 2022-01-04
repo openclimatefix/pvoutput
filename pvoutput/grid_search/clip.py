@@ -1,5 +1,5 @@
 """Clipping function for coordinates"""
-from typing import Union, Optional, Tuple, Iterable
+from typing import Iterable, Optional, Tuple, Union
 
 import geopandas as gpd
 import pandas as pd
