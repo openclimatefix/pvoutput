@@ -1,3 +1,5 @@
+numpy
+pandas>=1.0.0
 pyproj
 pyshp
 shapely
@@ -7,8 +9,6 @@ geopandas
 pytest
 pyyaml
 tables
-numpy
-pandas>=1.0.0
 matplotlib
 jupyter
 urllib3
