@@ -192,16 +192,16 @@ class GridSearch:
             coords, geometry=gpd.points_from_xy(coords.longitude, coords.latitude)
         )
         coords = coords.set_crs("EPSG:4326").to_crs(f"EPSG:4087")
-        coords = clip_to_countries(coords, world, countries, buffer, search_radius)
-        coords = clip_to_bbox(coords, bbox, buffer, search_radius, local_crs_epsg)
+        coords = clip_to_countries(coords=coords, world=world, countries=countries, buffer=buffer, search_radius=search_radius)
+        coords = clip_to_bbox(coords=coords, bbox=bbox, buffer=buffer, search_radius=search_radius, local_crs_epsg=local_crs_epsg)
         if radial_clip is not None:
             coords = clip_to_radius(
-                coords,
-                radial_clip[0],
-                radial_clip[1],
-                radial_clip[2],
-                search_radius,
-                local_crs_epsg,
+                coords=coords,
+                latitude=radial_clip[0],
+                longitude=radial_clip[1],
+                radius=radial_clip[2],
+                search_radius=search_radius,
+                local_crs_epsg=local_crs_epsg,
             )
 
         # show plot
