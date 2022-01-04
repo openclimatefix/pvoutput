@@ -9,13 +9,29 @@ from pvoutput import pvoutput
 
 
 def test_init(fake_configuration):
+    """ Test that PVOutput class starts"""
     _ = pvoutput.PVOutput(config_filename=fake_configuration)
 
 
 def test_error_data_service_url(fake_configuration):
+    """Test that error is made if data service url is wrong"""
     with pytest.raises(Exception):
         _ = pvoutput.PVOutput(data_service_url='www.test.com',
                               config_filename=fake_configuration)
+
+
+def test_error_no_file():
+    """ Test that error is made if file doesnt exists """
+    with pytest.raises(Exception):
+        _ = pvoutput.PVOutput(config_filename='fake.yaml')
+
+
+def test_error_get_status(fake_configuration):
+    """ Test that error is made when get status with a fake configuration """
+    pv = pvoutput.PVOutput(config_filename=fake_configuration)
+    with pytest.raises(Exception):
+        # error should be made as the configuration is made up
+        pv.get_status(pv_system_id=100, date='2021-01-01', historic=False)
 
 
 def test_convert_consecutive_dates_to_date_ranges():
