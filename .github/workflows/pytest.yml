@@ -9,3 +9,5 @@ jobs:
       pytest_cov_dir: "pvoutput"
       # these packages are installed. They are needed for 'cartopy'
       sudo_apt_install: 'libgeos-dev libproj-dev'
+      # these packages are installed. They are needed for 'cartopy'
+      brew_install: 'c-blosc hdf5 geos proj'
