@@ -144,8 +144,11 @@ class GridSearch:
             A pandas DataFrame containing co-ordinates for the grid with columns: latitude,
             longitude.
         """
+        # get countries
         world, all_countries = self.nat_earth.get_hires_world_boundaries()
         countries = all_countries if countries is None else countries
+
+        # create bounding box
         if bbox is None:
             if radial_clip is None:
                 bbox = (
@@ -162,6 +165,8 @@ class GridSearch:
                 )
         bbox = buffer_bounding_box_bounds(bbox, buffer)
         bounds = [np.round(b, 5) for b in bbox]
+
+        # create x and y bounds
         search_radius_m = search_radius * 1000.0
         wgs84_to_projected = Transformer.from_crs(4326, local_crs_epsg, always_xy=True)
         projected_to_wgs84 = Transformer.from_crs(local_crs_epsg, 4326, always_xy=True)
@@ -170,6 +175,8 @@ class GridSearch:
         y_interval = search_radius_m * np.cos(np.radians(30))
         x_interval = search_radius_m * 3
         x_offset = 0
+
+        # create coordinates
         coords = []
         for y in np.arange(ymin - y_interval * 3, ymax + y_interval + search_radius_m, y_interval):
             xmin_ = xmin - search_radius_m - x_offset
@@ -196,12 +203,16 @@ class GridSearch:
                 search_radius,
                 local_crs_epsg,
             )
+
+        # show plot
         if show:
             self.plot_grid(
                 coords,
                 countries,
                 bbox,
             )
+
+        # save plots
         if save_to is not None:
             coords.to_csv(
                 save_to, float_format="%.5f", index=False, columns=["longitude", "latitude"]
