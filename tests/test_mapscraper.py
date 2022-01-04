@@ -82,3 +82,27 @@ def test_process_metadata(get_function_dict, get_test_dict_of_dfs):
         )
         is None
     )
+
+
+def test_get_pv_systems_for_country():
+    """ test get pv systems for uk """
+    pv_systems = ms.get_pv_systems_for_country(country=243, max_pages=1)
+
+    assert type(pv_systems) == pd.DataFrame
+    assert 'address' in pv_systems.columns
+
+
+def test_get_regions_for_country():
+    """ test get region for denmark """
+    regions = ms.get_regions_for_country(country_code=67)
+    assert len(regions) > 0
+
+
+def test_convert_to_country_code():
+    """ test convert_to_country_cod"""
+    with pytest.raises(Exception):
+        country_code = ms._convert_to_country_code(country='uk')
+
+    assert ms._convert_to_country_code(country='Denmark') == 67
+
+

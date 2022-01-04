@@ -348,7 +348,7 @@ def get_regions_for_country(country_code: int):
     region_tags = soup.find_all("a", href=re.compile("map\.jsp\?country="))
     for row in region_tags:
         href = row.attrs["href"]
-        p = re.compile("^map\.jsp\?country=243&region=(\w+.*)$")
+        p = re.compile(f"^map\.jsp\?country={country_code}&region=(\w+.*)$")
         href_match = p.match(href)
         region = href_match.group(1)
         region_list.append(region)
