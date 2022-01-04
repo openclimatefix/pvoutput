@@ -1,3 +1,4 @@
+"""Retrieve Natural Earth world boundaries."""
 import logging
 import os
 from io import BytesIO
@@ -97,7 +98,7 @@ class NaturalEarth:
         self.countries = self.world_lores.name.unique()
         return self.world_lores, self.countries_lores
 
-    def list_countries(self, res: str = "hires") -> List[str]:
+    def list_countries(self, res: str = "hires") -> Tuple[gpd.GeoDataFrame, NDArray]:
         """Print a list of country names to stdout.
 
         Print a list of country names whose geometries are available in the world boundaries GIS

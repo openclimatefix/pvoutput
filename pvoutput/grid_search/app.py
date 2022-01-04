@@ -1,3 +1,15 @@
+"""
+Generate gridded lat/lon coordinates that can be used for fixed radius searches across a region.
+
+Provides both an importable method and a CLI.
+
+.. code:: console
+
+    $ python app.py -h
+
+- Jamie Taylor <jamie.taylor@sheffield.ac.uk>
+- First Authored: 2021-11-16
+"""
 import argparse
 import logging
 import os
