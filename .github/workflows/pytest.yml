@@ -11,3 +11,5 @@ jobs:
       sudo_apt_install: "libgeos-dev libproj-dev"
       # these packages are installed. They are needed for 'cartopy'
       brew_install: "c-blosc hdf5 geos proj"
+      API_KEY: ${{ secrets.API_KEY }}
+      SYSTEM_ID: ${{ secrets.SYSTEM_ID }}
