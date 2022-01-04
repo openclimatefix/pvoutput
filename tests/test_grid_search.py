@@ -1,6 +1,6 @@
 import os
 
-from pvoutput.grid_search import GridSearch
+from pvoutput.grid_search.grid_search import GridSearch
 
 SHOW = True
 if 'CI' in os.environ:
