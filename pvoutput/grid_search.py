@@ -18,7 +18,7 @@ import logging
 import os
 import sys
 from io import BytesIO
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple, Union
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -119,7 +119,7 @@ class NaturalEarth:
         self.countries = self.world_lores.name.unique()
         return self.world_lores, self.countries_lores
 
-    def list_countries(self, res: str = "hires") -> None:
+    def list_countries(self, res: str = "hires") -> List[str]:
         """Print a list of country names to stdout.
 
         Print a list of country names whose geometries are available in the world boundaries GIS
@@ -144,6 +144,8 @@ class NaturalEarth:
             raise ValueError("The `res` arg should be one of: 'lores', 'hires'.")
         countries.sort()
         print(f"Available countries are:\n{', '.join(countries)}")
+
+        return countries
 
 
 class GridSearch:
@@ -371,7 +373,7 @@ def clip_to_countries(
     countries_ = world[world.name.isin(countries)]
     countries_ = countries_.dissolve().buffer(buffer * 1000.0)[0]
     if search_radius is None:
-        coords["selected"] = coords_.within(countries_)
+        coords["selected"] = coords.within(countries_)
     else:
         # Consider points outside the selected region whose search radius overlaps the region
         coords_ = coords.buffer(search_radius * 1000.0)
@@ -550,7 +552,7 @@ def clip_to_radius(
         .buffer(radius * 1000.0)[0]
     )
     if search_radius is None:
-        coords["selected"] = coords_.within(radius_)
+        coords["selected"] = coords.within(radius_)
     else:
         coords_ = coords.to_crs(f"EPSG:{local_crs_epsg}").buffer(search_radius * 1000.0)
         coords["selected"] = coords_.intersects(radius_)
