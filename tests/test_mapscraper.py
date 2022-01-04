@@ -49,8 +49,8 @@ def test_pv_system_size_metadata(get_function_dict, get_test_dict_of_dfs):
 
 
 def test_process_output_col(get_function_dict, get_test_dict_of_dfs):
-    print(get_function_dict['process_output_col'])
-    print(get_test_dict_of_dfs['process_output_col'])
+    print(get_function_dict["process_output_col"])
+    print(get_test_dict_of_dfs["process_output_col"])
     assert (
         compare_function_output_to_pickle(
             "process_output_col", get_function_dict, get_test_dict_of_dfs, series=True
