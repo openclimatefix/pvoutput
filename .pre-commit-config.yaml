@@ -24,7 +24,7 @@ repos:
           [
             --convention=google,
             "--add-ignore=D200,D202,D210,D212,D415",
-            "nowcasting_dataset",
+            "pvoutput",
           ]
   - repo: https://github.com/PyCQA/flake8
     rev: 4.0.1
@@ -37,13 +37,13 @@ repos:
             --extend-ignore=E203,
             --per-file-ignores,
             "__init__.py:F401",
-            "nowcasting_dataset",
+            "pvoutput",
           ]
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
       - id: isort
-        args: [--profile, black, --line-length, "100", "nowcasting_dataset"]
+        args: [--profile, black, --line-length, "100", "pvoutput"]
   - repo: https://github.com/psf/black
     rev: 21.11b1
     hooks:
