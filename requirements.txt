@@ -1,5 +1,5 @@
 numpy
-pandas>=1.0.0
+pandas
 pyproj
 pyshp
 shapely
