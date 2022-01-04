@@ -12,6 +12,11 @@ def test_init():
     _ = pvoutput.PVOutput()
 
 
+def test_error_data_service_url():
+    with pytest.raises(Exception):
+        _ = pvoutput.PVOutput(data_service_url='www.test.com')
+
+
 def test_convert_consecutive_dates_to_date_ranges():
     dr1 = pd.date_range("2018-01-01", "2018-02-01", freq="D").tolist()
     dr2 = pd.date_range("2018-02-05", "2018-02-10", freq="D").tolist()
