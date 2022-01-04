@@ -8,6 +8,10 @@ import pytest
 from pvoutput import pvoutput
 
 
+def test_init():
+    _ = pvoutput.PVOutput()
+
+
 def test_convert_consecutive_dates_to_date_ranges():
     dr1 = pd.date_range("2018-01-01", "2018-02-01", freq="D").tolist()
     dr2 = pd.date_range("2018-02-05", "2018-02-10", freq="D").tolist()
