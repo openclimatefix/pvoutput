@@ -3,7 +3,7 @@ name: Python package
 on: [push]
 jobs:
   call-run-python-tests:
-    uses: openclimatefix/.github/.github/workflows/python-test.yml@geo
+    uses: openclimatefix/.github/.github/workflows/python-test.yml@codecov
     with:
       # pytest-cov looks at this folder
       pytest_cov_dir: "pvoutput"
