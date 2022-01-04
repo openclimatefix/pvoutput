@@ -1,4 +1,6 @@
 import inspect
+import tempfile
+import yaml
 import os
 import pickle
 from functools import partial
@@ -15,6 +17,19 @@ def data_dir():
     data_dir = os.path.abspath(data_dir)
     assert os.path.isdir(data_dir), data_dir + " does not exist."
     return data_dir
+
+
+@pytest.fixture
+def fake_configuration():
+    configuration = {'api_key': 'wrong_key',
+                    'system_id': 68732}
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        filename = tmpdirname + '/config.yaml'
+        with open(filename, 'w') as outfile:
+            yaml.dump(configuration, outfile, default_flow_style=False)
+
+        yield filename
 
 
 def get_cleaned_test_soup(data_dir):

@@ -8,13 +8,14 @@ import pytest
 from pvoutput import pvoutput
 
 
-def test_init():
-    _ = pvoutput.PVOutput()
+def test_init(fake_configuration):
+    _ = pvoutput.PVOutput(config_filename=fake_configuration)
 
 
-def test_error_data_service_url():
+def test_error_data_service_url(fake_configuration):
     with pytest.raises(Exception):
-        _ = pvoutput.PVOutput(data_service_url='www.test.com')
+        _ = pvoutput.PVOutput(data_service_url='www.test.com',
+                              config_filename=fake_configuration)
 
 
 def test_convert_consecutive_dates_to_date_ranges():

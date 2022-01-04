@@ -42,6 +42,15 @@ class PVOutput:
         rate_limit_total
         rate_limit_reset_time
         data_service_url
+
+    Methods:
+        search - Search for PV site
+        get_status - Get status (/power) of a pv site
+        get_batch_status - get status (/power) of multiple pv sites
+        get_metadata - get metadata for a pv site
+        get_statistic - get summary statistic for one pv site
+        get_insolation_forecast - get forecast of one pv site
+
     """
 
     def __init__(
@@ -648,7 +657,7 @@ class PVOutput:
         See https://pvoutput.org/help.html#api-getinsolation
 
         Args:
-           date: str in format YYYYMMDD; or datetime
+            date: str in format YYYYMMDD; or datetime
             (localtime of the PV system)
             pv_system_id: int
             timezone: str
