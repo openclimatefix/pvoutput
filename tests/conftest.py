@@ -18,7 +18,7 @@ def data_dir():
 
 
 def get_cleaned_test_soup(data_dir):
-    test_soup_filepath = os.path.join(data_dir, "mapscraper_soup.pickle")
+    test_soup_filepath = os.path.join(data_dir, "data/mapscraper_soup.pickle")
     with open(test_soup_filepath, "rb") as f:
         test_soup = pickle.load(f)
     return ms.clean_soup(test_soup)
@@ -26,7 +26,7 @@ def get_cleaned_test_soup(data_dir):
 
 @pytest.fixture()
 def get_test_dict_of_dfs(data_dir):
-    dict_filepath = os.path.join(data_dir, "mapscraper_dict_of_dfs.pickle")
+    dict_filepath = os.path.join(data_dir, "data/mapscraper_dict_of_dfs.pickle")
     with open(dict_filepath, "rb") as f:
         test_soup = pickle.load(f)
     return test_soup
