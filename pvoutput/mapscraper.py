@@ -263,8 +263,17 @@ def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _process_output_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
+
+    # get all data
     outputs_col = soup.find_all(text=re.compile("\d Days"))
+
+    # format data as strings
+    outputs_col = [str(col) for col in outputs_col]
+
+    # make into pandas Series
     duration = pd.Series(outputs_col, name="timeseries_duration", index=index)
+
+    # change to timedeltas
     return pd.to_timedelta(duration.astype("unicode"))
 
 
@@ -282,9 +291,9 @@ def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:
 def _process_generation_and_average_cols(
     soup: BeautifulSoup, index: Optional[Iterable] = None
 ) -> pd.DataFrame:
-    _soup = copy(soup)
-    [s.decompose() for s in _soup.select("a")]
-    generation_and_average_cols = _soup.find_all(text=re.compile("\d[Mk]Wh$"))
+    # _soup = deepcopy(soup)
+    [s.decompose() for s in soup.select("a")]
+    generation_and_average_cols = soup.find_all(text=re.compile("\d[Mk]Wh$"))
     generation_col = generation_and_average_cols[0::2]
     average_col = generation_and_average_cols[1::2]
     df = pd.DataFrame(

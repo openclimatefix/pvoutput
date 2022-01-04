@@ -23,9 +23,8 @@ def test_get_system_ids_in_store(data_dir):
     np.testing.assert_array_equal(system_ids, [PV_SYSTEM])
 
 
-@pytest.mark.skip("Issue #69")
 def test_get_date_ranges_to_download(data_dir):
-    test_hdf = os.path.join(data_dir(), "data/test.hdf")
+    test_hdf = os.path.join(data_dir, "data/test.hdf")
     date_ranges = utils.get_date_ranges_to_download(test_hdf, PV_SYSTEM, "2018-01-01", "2019-01-10")
     # 2018-01-02 and 2018-01-03 are already known to be missing.
     np.testing.assert_array_equal(
