@@ -2,14 +2,13 @@ import os
 import pickle
 from functools import partial
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from pvoutput import mapscraper as ms
 from pvoutput.consts import MAP_URL
-from pvoutput.tests.create_mapscraper_test_files import get_keys_for_dict
-from pvoutput.tests.test_utils import data_dir
+from tests.create_mapscraper_test_files import get_keys_for_dict
+from tests.test_utils import data_dir
 
 
 def get_cleaned_test_soup():
