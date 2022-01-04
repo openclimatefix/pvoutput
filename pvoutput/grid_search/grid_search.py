@@ -10,8 +10,13 @@ import numpy as np
 import pandas as pd
 from pyproj import Transformer
 
-from pvoutput.grid_search.clip import clip_to_radius, bounding_box_from_radius, buffer_bounding_box_bounds, \
-    clip_to_bbox, clip_to_countries
+from pvoutput.grid_search.clip import (
+    bounding_box_from_radius,
+    buffer_bounding_box_bounds,
+    clip_to_bbox,
+    clip_to_countries,
+    clip_to_radius,
+)
 from pvoutput.grid_search.natural_earth import NaturalEarth
 
 
@@ -202,5 +207,3 @@ class GridSearch:
                 save_to, float_format="%.5f", index=False, columns=["longitude", "latitude"]
             )
         return coords[["latitude", "longitude"]].reset_index(drop=True)
-
-
