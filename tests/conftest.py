@@ -8,6 +8,8 @@ from functools import partial
 import pytest
 
 from pvoutput import mapscraper as ms
+from pvoutput.consts import CONFIG_FILENAME
+from pvoutput.pvoutput import _get_param_from_config_file
 
 
 @pytest.fixture
@@ -23,6 +25,27 @@ def data_dir():
 def fake_configuration():
     configuration = {'api_key': 'wrong_key',
                     'system_id': 68732}
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        filename = tmpdirname + '/config.yaml'
+        with open(filename, 'w') as outfile:
+            yaml.dump(configuration, outfile, default_flow_style=False)
+
+        yield filename
+
+
+@pytest.fixture
+def real_configuration():
+    configuration = {}
+
+    for key in ['api_key', 'system_id']:
+        try:
+            value = os.environ[key]
+        except:
+            value = _get_param_from_config_file(
+                key, CONFIG_FILENAME
+            )
+        configuration[key] = value
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         filename = tmpdirname + '/config.yaml'
