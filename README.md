@@ -1,7 +1,8 @@
-[![Build Status](https://api.travis-ci.com/openclimatefix/pvoutput.svg)](https://travis-ci.com/openclimatefix/pvoutput/)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
+
+[![codecov](https://codecov.io/gh/openclimatefix/pvoutput/branch/main/graph/badge.svg?token=GTQDR2ZZ2S)](https://codecov.io/gh/openclimatefix/pvoutput)
 
 Download historical solar photovoltaic data from [PVOutput.org](https://pvoutput.org).
 
