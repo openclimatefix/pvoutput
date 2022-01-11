@@ -40,7 +40,7 @@ def real_configuration():
 
     for key in ['api_key', 'system_id']:
         try:
-            value = os.environ[key.upper()]
+            value = os.environ[key]
         except:
             value = _get_param_from_config_file(
                 key, CONFIG_FILENAME
