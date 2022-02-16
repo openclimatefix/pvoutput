@@ -4,7 +4,6 @@ pyproj
 pyshp
 shapely
 cython>0.15.1
-cartopy
 geopandas
 pytest
 pyyaml
