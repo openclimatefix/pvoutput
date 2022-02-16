@@ -4,7 +4,7 @@ pyproj
 pyshp
 shapely
 cython>0.15.1
-cartopy
+cartopy==0.20.1
 geopandas
 pytest
 pyyaml
