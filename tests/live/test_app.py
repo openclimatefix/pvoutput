@@ -1,11 +1,11 @@
-from pvoutput.live.app import pull_data, app
-
-from nowcasting_datamodel.models.pv import PVSystem, PVSystemSQL, PVYieldSQL, PVYield
+import os
 from datetime import datetime, timezone
 from typing import List
 
-import os
+from nowcasting_datamodel.models.pv import PVSystem, PVSystemSQL, PVYield, PVYieldSQL
+
 import pvoutput
+from pvoutput.live.app import app, pull_data
 
 
 def test_pull_data(db_session):
@@ -17,6 +17,7 @@ def test_pull_data(db_session):
     pv_yields = pull_data(pv_systems=pv_systems, session=db_session)
 
     assert len(pv_yields) > 0
+
 
 # def test_app():
 #

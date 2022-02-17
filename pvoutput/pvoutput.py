@@ -114,7 +114,7 @@ class PVOutput:
         lat: Optional[float] = None,
         lon: Optional[float] = None,
         include_country: bool = True,
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
         """Search for PV systems.
 
@@ -270,7 +270,7 @@ class PVOutput:
         pv_system_id: int,
         date_to: Optional[Union[str, datetime]] = None,
         max_retries: Optional[int] = 1000,
-        **kwargs
+        **kwargs,
     ) -> Union[None, pd.DataFrame]:
         """Get batch PV system status (e.g. power generation).
 
@@ -379,10 +379,10 @@ class PVOutput:
                 "sid1": pv_system_id,  # SystemID
                 "ext": 0,  # Include extended data?
             },
-            **kwargs
+            **kwargs,
         )
 
-        _LOG.debug(f'getting metadata for {pv_system_id}')
+        _LOG.debug(f"getting metadata for {pv_system_id}")
 
         pv_metadata = pd.read_csv(
             StringIO(pv_metadata_text),
@@ -421,7 +421,7 @@ class PVOutput:
         pv_system_id: int,
         date_from: Optional[Union[str, date]] = None,
         date_to: Optional[Union[str, date]] = None,
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
         """Get summary stats for a single PV system.
 
@@ -505,7 +505,7 @@ class PVOutput:
         pv_system_id: int,
         date_from: Optional[Union[str, date]] = None,
         date_to: Optional[Union[str, date]] = None,
-        **kwargs
+        **kwargs,
     ) -> pd.Series:
         """Will try to get stats from store_filename['statistics'].  If this
         fails, or if date_to > query_date_to, or if
@@ -641,7 +641,7 @@ class PVOutput:
         timezone: Optional[str] = None,
         lat: Optional[float] = None,
         lon: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ):
         """Get Insolation data for a given site, or a given location defined by
         longitude and latitude. This is the estimated output for the site

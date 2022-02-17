@@ -6,32 +6,32 @@
 4. Save data to database - extra: check no duplicate data is added to the database
 """
 
-import pandas as pd
+import logging
+import os
 from datetime import datetime
 from typing import List, Optional
-import pvoutput
-import os
-from pvoutput import PVOutput
+
+import pandas as pd
+from nowcasting_datamodel.connection import Base_PV, DatabaseConnection
+from nowcasting_datamodel.models.pv import PVSystemSQL, PVYield
 from sqlalchemy.orm import Session
 
-from nowcasting_datamodel.models.pv import PVSystemSQL, PVYield
-
-from pvoutput.live.pv_systems import get_pv_systems, filter_pv_systems_which_have_new_data
-from nowcasting_datamodel.connection import DatabaseConnection, Base_PV
-import logging
+import pvoutput
+from pvoutput import PVOutput
+from pvoutput.live.pv_systems import filter_pv_systems_which_have_new_data, get_pv_systems
 
 logger = logging.getLogger(__name__)
 
 
 # TODO add click arguements
 def app(filename: Optional[str] = None):
-    db_url = 'sqlite:///test.db'
+    db_url = "sqlite:///test.db"
 
     connection = DatabaseConnection(url=db_url, base=Base_PV, echo=False)
     with connection.get_session() as session:
         # 1. Read list of PV systems (from local file)
         # and get their refresh times (refresh times can also be stored locally)
-        pv_systems = get_pv_systems(session=session,filename=filename)
+        pv_systems = get_pv_systems(session=session, filename=filename)
 
         # 2. Find most recent entered data (for each PV system) in OCF database, and filter depending on refresh rate
         pv_systems = filter_pv_systems_which_have_new_data(pv_systems=pv_systems)
@@ -49,7 +49,7 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
     if datetime_utc is None:
         datetime_utc = datetime.utcnow()  # add timezone
 
-    logger.info(f'Pulling data for pv system {len(pv_systems)} pv systems for {datetime_utc}')
+    logger.info(f"Pulling data for pv system {len(pv_systems)} pv systems for {datetime_utc}")
 
     all_pv_yields = []
     for pv_system in pv_systems:
@@ -61,10 +61,12 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
         # then this will just get data for 2022-01-02, and therefore missing
         # 2022-01-01 23.57 to 2022-01-02
         date = datetime_utc.date()
-        pv_yield_df = pv_output.get_status(pv_system_id=pv_system.pv_system_id, date=date, use_data_service=True)
+        pv_yield_df = pv_output.get_status(
+            pv_system_id=pv_system.pv_system_id, date=date, use_data_service=True
+        )
 
         if len(pv_yield_df) == 0:
-            logger.warning(f'Did not find any data for {pv_system.pv_system_id} for {date}')
+            logger.warning(f"Did not find any data for {pv_system.pv_system_id} for {date}")
         else:
 
             # filter by last
@@ -72,12 +74,16 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
                 last_pv_yield_datetime = pv_system.last_pv_yield.datetime_utc
                 pv_yield_df = pv_yield_df[pv_yield_df.index > last_pv_yield_datetime]
             else:
-                logger.debug(f'This is the first lot pv yield data for pv system {(pv_system.pv_system_id)}')
+                logger.debug(
+                    f"This is the first lot pv yield data for pv system {(pv_system.pv_system_id)}"
+                )
 
             # need columns datetime_utc, solar_generation_kw
-            pv_yield_df = pv_yield_df[['instantaneous_power_gen_W']]
-            pv_yield_df.rename(columns={'instantaneous_power_gen_W': 'solar_generation_kw'}, inplace=True)
-            pv_yield_df['datetime_utc'] = pv_yield_df.index
+            pv_yield_df = pv_yield_df[["instantaneous_power_gen_W"]]
+            pv_yield_df.rename(
+                columns={"instantaneous_power_gen_W": "solar_generation_kw"}, inplace=True
+            )
+            pv_yield_df["datetime_utc"] = pv_yield_df.index
 
             # change to list of pydantic objects
             pv_yields = [PVYield(**row) for row in pv_yield_df.to_dict(orient="records")]
@@ -93,7 +99,7 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
 
 
 def save_to_database(session: Session, pv_yields: List[PVYield]):
-    logger.debug(f'Will be adding {len(pv_yields)} to database')
+    logger.debug(f"Will be adding {len(pv_yields)} to database")
 
     session.add_all(pv_yields)
     session.commit()

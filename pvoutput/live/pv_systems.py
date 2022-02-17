@@ -1,15 +1,15 @@
-import pandas as pd
-from typing import List, Optional
-from pvoutput import PVOutput
-import pvoutput
-import os
 import logging
+import os
 from datetime import datetime, timedelta
+from typing import List, Optional
 
+import pandas as pd
 from nowcasting_datamodel.models.pv import PVSystem, PVSystemSQL
 from sqlalchemy.orm import Session
 
-from pvoutput.live.utils import list_pv_system_to_df, df_to_list_pv_system
+import pvoutput
+from pvoutput import PVOutput
+from pvoutput.live.utils import df_to_list_pv_system, list_pv_system_to_df
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +86,12 @@ def get_pv_systems(session: Session, filename: Optional[str] = None) -> List[PVS
             metadata = pv_output.get_metadata(
                 pv_system_id=pv_system.pv_system_id, use_data_service=True
             )
-            logger.info(f'Fpr py stsem {pv_system.pv_system_id}, setting '
-                         f'latitude {metadata.latitude}, '
-                         f'longitude {metadata.longitude}, '
-                         f'status_interval_minutes {metadata.status_interval_minutes}, '
-                         )
+            logger.info(
+                f"Fpr py stsem {pv_system.pv_system_id}, setting "
+                f"latitude {metadata.latitude}, "
+                f"longitude {metadata.longitude}, "
+                f"status_interval_minutes {metadata.status_interval_minutes}, "
+            )
             pv_system.latitude = metadata.latitude
             pv_system.longitude = metadata.longitude
             pv_system.status_interval_minutes = int(metadata.status_interval_minutes)
@@ -125,8 +126,10 @@ def filter_pv_systems_which_have_new_data(
 
     """
 
-    logger.info(f'Looking at which PV systems might have new data. '
-                f'Number of pv systems are {len(pv_systems)}')
+    logger.info(
+        f"Looking at which PV systems might have new data. "
+        f"Number of pv systems are {len(pv_systems)}"
+    )
 
     if datetime_utc is None:
         datetime_utc = datetime.utcnow()  # add timezone

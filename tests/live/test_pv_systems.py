@@ -1,15 +1,16 @@
-from pvoutput.live.pv_systems import (
-    find_missing_pv_systems,
-    filter_pv_systems_which_have_new_data,
-    load_pv_systems,
-    get_pv_systems,
-)
-from nowcasting_datamodel.models.pv import PVSystem, PVSystemSQL, PVYieldSQL, PVYield
+import os
 from datetime import datetime, timezone
 from typing import List
 
-import os
+from nowcasting_datamodel.models.pv import PVSystem, PVSystemSQL, PVYield, PVYieldSQL
+
 import pvoutput
+from pvoutput.live.pv_systems import (
+    filter_pv_systems_which_have_new_data,
+    find_missing_pv_systems,
+    get_pv_systems,
+    load_pv_systems,
+)
 
 
 def test_load_pv_systems():
