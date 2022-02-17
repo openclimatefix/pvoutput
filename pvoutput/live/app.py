@@ -65,6 +65,8 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
             pv_system_id=pv_system.pv_system_id, date=date, use_data_service=True
         )
 
+        logger.debug(f'Got {len(pv_yield_df)} pv yield for pv systems {pv_system.pv_system_id} before filtering')
+
         if len(pv_yield_df) == 0:
             logger.warning(f"Did not find any data for {pv_system.pv_system_id} for {date}")
         else:
@@ -73,6 +75,10 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
             if pv_system.last_pv_yield is not None:
                 last_pv_yield_datetime = pv_system.last_pv_yield.datetime_utc
                 pv_yield_df = pv_yield_df[pv_yield_df.index > last_pv_yield_datetime]
+
+                if len(pv_yield_df) == 0:
+                    logger.debug(f'No new data avialble after {last_pv_yield_datetime}. Last data point was {pv_yield_df.index.max()}')
+                    logger.debug(pv_yield_df)
             else:
                 logger.debug(
                     f"This is the first lot pv yield data for pv system {(pv_system.pv_system_id)}"
@@ -95,11 +101,13 @@ def pull_data(pv_systems: List[PVSystemSQL], session: Session, datetime_utc: Opt
 
             all_pv_yields = all_pv_yields + pv_yields_sql
 
+            logger.debug(f'Found {len(pv_yields_sql)} pv yield for pv systems {pv_system.pv_system_id}')
+
     return all_pv_yields
 
 
 def save_to_database(session: Session, pv_yields: List[PVYield]):
-    logger.debug(f"Will be adding {len(pv_yields)} to database")
+    logger.debug(f"Will be adding {len(pv_yields)} pv yield object to database")
 
     session.add_all(pv_yields)
     session.commit()
