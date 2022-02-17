@@ -31,10 +31,24 @@ The default location of the `.pvoutput.yml` is the user's home directory, expand
 e.g. `export PVOUTPUT_CONFIG="/my/preferred/location/.pvoutput.yml"`
 
 ### API quotas and paid subscriptions
+Please see [here](https://pvoutput.org/help/data_services.html) for update info. 
 
-* For free, PVOutput.org gives you 60 API requests per hour.  Per request, you can download one day of data for one PV system.  (See PVOutput's docs for more info about [rate limits](https://pvoutput.org/help/api_specification.html#rate-limits).)
-* [Donating to PVOutput.org](https://pvoutput.org/help/donations.html#donations) increases your quota for a year to 300 requests per hour.
-* To get more historical data, you can pay $600 Australian dollars for a year's 'Live System History' subscription for a single country ([more info here](https://pvoutput.org/help/data_services.html)).  This allows you to use the [`get batch status`](https://pvoutput.org/help/data_services.html#get-batch-status-service) API to download 900 PV-system-*years* per hour.  If you have subscribed to PVOutput's data service then add `data_service_url` to `~/.pvoutput.yml` or pass `data_service_url` to the `PVOutput` constructor.  The `data_service_url` should end in `.org`.  That is, don't include the `/service/r2` part of the URL.
+#### Free
+
+PVOutput.org gives you 60 API requests per hour.  Per request, you can download one day of data for one PV system.  (See PVOutput's docs for more info about [rate limits](https://pvoutput.org/help/api_specification.html#rate-limits).)
+
+#### Donate
+[Donating to PVOutput.org](https://pvoutput.org/help/donations.html#donations) increases your quota for a year to 300 requests per hour. 
+#### Paid
+To get more historical data, you can pay $600 Australian dollars for a year's 'Live System History' subscription for a single country ([more info here](https://pvoutput.org/help/data_services.html)).  
+This allows you to use the [`get batch status`](https://pvoutput.org/help/data_services.html#get-batch-status-service) API to download 900 PV-system-*years* per hour.  
+
+If you have subscribed to PVOutput's data service then either
+- add `data_service_url` to your configuration file (`~/.pvoutput.yml`) or 
+- pass `data_service_url` to the `PVOutput` constructor. 
+
+The `data_service_url` should end in `.org` (note this dones include the `/service/r2` part of the URL)
+For example: `data_service_url: https://pvoutput.org/`
 
 
 ## Install pvoutput Python library
