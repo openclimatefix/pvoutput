@@ -28,7 +28,7 @@ The app has the following high-level strucuture
    graph TD
     B0(Start) --> B1{Is there any PV data in <br/> our database for this PV system?}
     B1 --> |No| B2[Keep PV system]
-    B1--> |yes| B3{Is there any PV data, <br/> from pv output.org, <br/>available for this PV system?}
+    B1--> |yes| B3{Is there any more PV data, <br/> from pv output.org, <br/>available for this PV system?}
     B3 --> |yes| B2
     B3 --> |No| B5[Dischagre PV system]
     B2 --> B6(Finish)
