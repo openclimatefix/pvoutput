@@ -382,6 +382,8 @@ class PVOutput:
             **kwargs
         )
 
+        _LOG.debug(f'getting metadata for {pv_system_id}')
+
         pv_metadata = pd.read_csv(
             StringIO(pv_metadata_text),
             lineterminator=";",
@@ -907,7 +909,7 @@ class PVOutput:
         api_params["key"] = self.api_key
         api_params["sid"] = self.system_id
 
-        api_url = urljoin(self.data_service_url, "service/r2/{}.jsp".format(service))
+        api_url = urljoin(self.data_service_url, "data/r2/{}.jsp".format(service))
 
         return _get_response(api_url, api_params, headers)
 
