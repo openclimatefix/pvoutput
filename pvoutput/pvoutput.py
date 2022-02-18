@@ -46,8 +46,8 @@ class PVOutput:
 
     def __init__(
         self,
-        api_key: str = os.getenv('API_KEY'),
-        system_id: str = os.getenv('SYSTEM_ID'),
+        api_key: str = os.getenv("API_KEY"),
+        system_id: str = os.getenv("SYSTEM_ID"),
         config_filename: Optional[str] = CONFIG_FILENAME,
         data_service_url: Optional[str] = None,
     ):
