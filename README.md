@@ -30,7 +30,7 @@ The default location of the `.pvoutput.yml` is the user's home directory, expand
 
 e.g. `export PVOUTPUT_CONFIG="/my/preferred/location/.pvoutput.yml"`
 
-Alternatively, you can set `API_KEY` and `SYSTEM_ID` as environmental variables. 
+Alternatively, you can set `API_KEY`, `SYSTEM_ID` and `DATA_SERVICE_URL` (see below) as environmental variables. 
 
 ### API quotas and paid subscriptions
 Please see [here](https://pvoutput.org/help/data_services.html) for update info.

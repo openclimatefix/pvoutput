@@ -49,7 +49,7 @@ class PVOutput:
         api_key: str = os.getenv('API_KEY'),
         system_id: str = os.getenv('SYSTEM_ID'),
         config_filename: Optional[str] = CONFIG_FILENAME,
-        data_service_url: Optional[str] = None,
+        data_service_url: Optional[str] = os.getenv('DATA_SERVICE_URL'),
     ):
         """
         Args:
