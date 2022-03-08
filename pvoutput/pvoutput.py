@@ -180,7 +180,7 @@ class PVOutput:
         return pv_systems
 
     def get_status(
-        self, pv_system_id: int, date: Union[str, datetime], historic: bool = True, **kwargs
+        self, pv_system_id: Union[int, List[int]], date: Union[str, datetime], historic: bool = True, **kwargs
     ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
 
@@ -188,7 +188,9 @@ class PVOutput:
         returns 'status 400: No status found'.
 
         Args:
-            pv_system_id: int
+            pv_system_id: int or list of ints.
+                If you have a subscription service then multiple (up to 50)
+                pv systems status can be queries at once
             date: str in format YYYYMMDD; or datetime
                 (localtime of the PV system)
 
@@ -210,12 +212,18 @@ class PVOutput:
         date = date_to_pvoutput_str(date)
         _check_date(date)
 
+        if isinstance(pv_system_id, list):
+            # join the system ids with a column
+            all_pv_system_id = ','.join(pv_system_id)
+        else:
+            all_pv_system_id = pv_system_id
+
         api_params = {
             "d": date,  # date, YYYYMMDD, localtime of the PV system
             "h": int(historic == True),  # We want historical data.
             "limit": 288,  # API limit is 288 (num of 5-min periods per day).
             "ext": 0,  # Extended data; we don't want extended data.
-            "sid1": pv_system_id,  # SystemID.
+            "sid1": all_pv_system_id,  # SystemID.
         }
 
         try:
