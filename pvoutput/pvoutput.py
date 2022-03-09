@@ -49,7 +49,7 @@ class PVOutput:
         api_key: str = os.getenv("API_KEY"),
         system_id: str = os.getenv("SYSTEM_ID"),
         config_filename: Optional[str] = CONFIG_FILENAME,
-        data_service_url: Optional[str] = os.getenv('DATA_SERVICE_URL'),
+        data_service_url: Optional[str] = os.getenv("DATA_SERVICE_URL"),
     ):
         """
         Args:
@@ -180,7 +180,11 @@ class PVOutput:
         return pv_systems
 
     def get_status(
-        self, pv_system_id: Union[int, List[int]], date: Union[str, datetime], historic: bool = True, **kwargs
+        self,
+        pv_system_id: Union[int, List[int]],
+        date: Union[str, datetime],
+        historic: bool = True,
+        **kwargs,
     ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
 
@@ -214,7 +218,7 @@ class PVOutput:
 
         if isinstance(pv_system_id, list):
             # join the system ids with a column
-            all_pv_system_id = ','.join(pv_system_id)
+            all_pv_system_id = ",".join(pv_system_id)
         else:
             all_pv_system_id = pv_system_id
 
