@@ -218,7 +218,7 @@ class PVOutput:
 
         if isinstance(pv_system_id, list):
             # join the system ids with a column
-            all_pv_system_id = ",".join(pv_system_id)
+            all_pv_system_id = ",".join([str(idx) for idx in pv_system_id])
         else:
             all_pv_system_id = pv_system_id
 
@@ -237,6 +237,9 @@ class PVOutput:
         except NoStatusFound:
             _LOG.info("system_id %d: No status found for date %s", pv_system_id, date)
             pv_system_status_text = ""
+
+        print(pv_system_status_text)
+        assert 0
 
         # See https://pvoutput.org/help.html#api-getstatus but make sure
         # you read the 'History Query' subsection, as a historical query
