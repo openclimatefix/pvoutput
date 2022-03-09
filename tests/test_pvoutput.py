@@ -9,7 +9,7 @@ from pvoutput import pvoutput
 
 
 def test_init():
-    _ = pvoutput.PVOutput(api_key='fake',system_id='fake')
+    _ = pvoutput.PVOutput(api_key="fake", system_id="fake")
 
 
 @pytest.mark.skip("Currently not working in CI")
