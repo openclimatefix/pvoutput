@@ -8,18 +8,18 @@ import pytest
 from pvoutput import pvoutput
 
 
-@pytest.mark.skip('Currently not working in CI')
+@pytest.mark.skip("Currently not working in CI")
 def test_init():
     _ = pvoutput.PVOutput()
 
 
-@pytest.mark.skip('Currently not working in CI')
+@pytest.mark.skip("Currently not working in CI")
 def test_get_status():
     pv = pvoutput.PVOutput()
     pv.get_status(pv_system_id=10020, date=datetime(2022, 1, 1), use_data_service=True)
 
 
-@pytest.mark.skip('Currently not working in CI')
+@pytest.mark.skip("Currently not working in CI")
 def test_multiple_get_status():
     pv = pvoutput.PVOutput()
     pv.get_status(pv_system_id=[10020, 10003], date=datetime(2022, 1, 1), use_data_service=True)
