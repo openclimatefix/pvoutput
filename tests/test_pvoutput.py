@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from io import StringIO
 
 import numpy as np
@@ -6,6 +6,20 @@ import pandas as pd
 import pytest
 
 from pvoutput import pvoutput
+
+
+def test_init():
+    _ = pvoutput.PVOutput()
+
+
+def test_get_status():
+    pv = pvoutput.PVOutput()
+    pv.get_status(pv_system_id=10020,date=datetime(2022,1,1), use_data_service=True)
+
+
+def test_multiple_get_status():
+    pv = pvoutput.PVOutput()
+    pv.get_status(pv_system_id=[10020,10003],date=datetime(2022,1,1), use_data_service=True)
 
 
 def test_convert_consecutive_dates_to_date_ranges():
