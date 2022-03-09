@@ -16,13 +16,13 @@ def test_init():
 @pytest.mark.skip('Currently not working in CI')
 def test_get_status():
     pv = pvoutput.PVOutput()
-    pv.get_status(pv_system_id=10020,date=datetime(2022,1,1), use_data_service=True)
+    pv.get_status(pv_system_id=10020, date=datetime(2022, 1, 1), use_data_service=True)
 
 
 @pytest.mark.skip('Currently not working in CI')
 def test_multiple_get_status():
     pv = pvoutput.PVOutput()
-    pv.get_status(pv_system_id=[10020,10003],date=datetime(2022,1,1), use_data_service=True)
+    pv.get_status(pv_system_id=[10020, 10003], date=datetime(2022, 1, 1), use_data_service=True)
 
 
 def test_convert_consecutive_dates_to_date_ranges():
