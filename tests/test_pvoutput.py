@@ -21,7 +21,9 @@ def test_get_status():
 @pytest.mark.skip("Currently not working in CI")
 def test_multiple_get_status():
     pv = pvoutput.PVOutput()
-    status_df = pv.get_system_status(pv_system_id=[10033, 10020], date=datetime(2022, 3, 15), use_data_service=True)
+    status_df = pv.get_system_status(
+        pv_system_id=[10033, 10020], date=datetime(2022, 3, 15), use_data_service=True
+    )
 
     assert len(status_df) > 0
 
