@@ -321,23 +321,23 @@ class PVOutput:
             pv_system_status_text = ""
 
         # each pv system is on a new line
-        pv_systems_status_text = pv_system_status_text.split('\n')
+        pv_systems_status_text = pv_system_status_text.split("\n")
 
         # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
         columns = [
-                "cumulative_energy_gen_Wh",
-                "instantaneous_power_gen_W",
-                "energy_consumption_Wh",
-                "temperature_C",
-                "voltage",
-            ]
+            "cumulative_energy_gen_Wh",
+            "instantaneous_power_gen_W",
+            "energy_consumption_Wh",
+            "temperature_C",
+            "voltage",
+        ]
 
         pv_system_status = []
         for pv_system_status_text in pv_systems_status_text:
 
             # get system id
-            system_id = pv_system_status_text.split(';')[0]
-            pv_system_status_text = ';'.join(pv_system_status_text.split(';')[1:])
+            system_id = pv_system_status_text.split(";")[0]
+            pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
 
             one_pv_system_status = pd.read_csv(
                 StringIO(pv_system_status_text),
@@ -349,19 +349,23 @@ class PVOutput:
             ).sort_index()
 
             # process dataframe
-            one_pv_system_status['system_id'] = system_id
+            one_pv_system_status["system_id"] = system_id
 
             # format date
-            one_pv_system_status['date'] = date
-            one_pv_system_status['date'] = pd.to_datetime(date)
+            one_pv_system_status["date"] = date
+            one_pv_system_status["date"] = pd.to_datetime(date)
 
             # format time
-            one_pv_system_status['time'] = pd.to_datetime(one_pv_system_status['time']).dt.strftime('%H:%M:%S')
-            one_pv_system_status['time'] = pd.to_timedelta(one_pv_system_status['time'])
+            one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
+                "%H:%M:%S"
+            )
+            one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
 
             # make datetime
-            one_pv_system_status['datetime'] = one_pv_system_status['date'] + one_pv_system_status['time']
-            one_pv_system_status.drop(columns=['date', 'time'], inplace=True)
+            one_pv_system_status["datetime"] = (
+                one_pv_system_status["date"] + one_pv_system_status["time"]
+            )
+            one_pv_system_status.drop(columns=["date", "time"], inplace=True)
 
             pv_system_status.append(one_pv_system_status)
 
