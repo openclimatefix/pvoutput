@@ -41,8 +41,9 @@ PVOutput.org gives you 60 API requests per hour.  Per request, you can download 
 
 #### Donate
 [Donating to PVOutput.org](https://pvoutput.org/help/donations.html#donations) increases your quota for a year to 300 requests per hour.
+
 #### Paid
-To get more historical data, you can pay $600 Australian dollars for a year's 'Live System History' subscription for a single country ([more info here](https://pvoutput.org/help/data_services.html)).
+To get more historical data, you can pay $600 Australian dollars for a year's 'Live System History' subscription for a single country ([more info here](https://pvoutput.org/help/data_services.html). And [here's PVOutput.org's full price list](https://pvoutput.org/services.jsp)).
 This allows you to use the [`get batch status`](https://pvoutput.org/help/data_services.html#get-batch-status-service) API to download 900 PV-system-*years* per hour.
 
 If you have subscribed to PVOutput's data service then either
