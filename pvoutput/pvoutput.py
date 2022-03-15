@@ -271,7 +271,7 @@ class PVOutput:
 
     def get_system_status(
         self,
-        pv_system_id: List[int],
+        pv_system_ids: List[int],
         date: Union[str, datetime],
         **kwargs,
     ) -> pd.DataFrame:
@@ -281,7 +281,7 @@ class PVOutput:
         returns 'status 400: No status found'.
 
         Args:
-            pv_system_id: list of ints.
+            pv_system_ids: list of ints.
                 If you have a subscription service then multiple (up to 50)
                 pv systems status can be queries at once
             date: str in format YYYYMMDD; or datetime
@@ -299,12 +299,12 @@ class PVOutput:
                     temperature_C,
                     voltage,
         """
-        _LOG.info("system_id %d: Requesting batch system status for %s", pv_system_id, date)
+        _LOG.info(f"system_ids {pv_system_ids}: Requesting batch system status for %s", pv_system_id, date)
         date = date_to_pvoutput_str(date)
         _check_date(date)
 
         # join the system ids with a column
-        all_pv_system_id = ",".join([str(idx) for idx in pv_system_id])
+        all_pv_system_id = ",".join([str(idx) for idx in pv_system_ids])
 
         api_params = {
             "dt": date,  # date, YYYYMMDD, localtime of the PV system
