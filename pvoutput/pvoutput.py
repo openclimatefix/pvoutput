@@ -343,8 +343,6 @@ class PVOutput:
                 StringIO(pv_system_status_text),
                 lineterminator=";",
                 names=["time"] + columns,
-                # parse_dates={"datetime": ["date", "time"]},
-                # index_col=["datetime"],
                 dtype={col: np.float64 for col in columns},
             ).sort_index()
 
