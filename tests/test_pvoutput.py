@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from io import StringIO
 
 import numpy as np
@@ -6,6 +6,26 @@ import pandas as pd
 import pytest
 
 from pvoutput import pvoutput
+
+
+def test_init():
+    _ = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+
+@pytest.mark.skip("Currently not working in CI")
+def test_get_status():
+    pv = pvoutput.PVOutput()
+    pv.get_status(pv_system_id=10033, date=datetime(2022, 3, 1, 12), use_data_service=True)
+
+
+@pytest.mark.skip("Currently not working in CI")
+def test_multiple_get_status():
+    pv = pvoutput.PVOutput()
+    status_df = pv.get_system_status(
+        pv_system_id=[10033, 10020], date=datetime(2022, 3, 15), use_data_service=True
+    )
+
+    assert len(status_df) > 0
 
 
 def test_convert_consecutive_dates_to_date_ranges():

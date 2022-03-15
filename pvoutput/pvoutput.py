@@ -49,7 +49,7 @@ class PVOutput:
         api_key: str = os.getenv("API_KEY"),
         system_id: str = os.getenv("SYSTEM_ID"),
         config_filename: Optional[str] = CONFIG_FILENAME,
-        data_service_url: Optional[str] = os.getenv('DATA_SERVICE_URL'),
+        data_service_url: Optional[str] = os.getenv("DATA_SERVICE_URL"),
     ):
         """
         Args:
@@ -180,7 +180,11 @@ class PVOutput:
         return pv_systems
 
     def get_status(
-        self, pv_system_id: int, date: Union[str, datetime], historic: bool = True, **kwargs
+        self,
+        pv_system_id: int,
+        date: Union[str, datetime],
+        historic: bool = True,
+        **kwargs,
     ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
 
@@ -262,6 +266,109 @@ class PVOutput:
             index_col=["datetime"],
             dtype={col: np.float64 for col in columns},
         ).sort_index()
+
+        return pv_system_status
+
+    def get_system_status(
+        self,
+        pv_system_id: List[int],
+        date: Union[str, datetime],
+        **kwargs,
+    ) -> pd.DataFrame:
+        """Get Batch of PV system status (e.g. power generation) for one day, for multiple systems
+
+        The returned DataFrame will be empty if the PVOutput API
+        returns 'status 400: No status found'.
+
+        Args:
+            pv_system_id: list of ints.
+                If you have a subscription service then multiple (up to 50)
+                pv systems status can be queries at once
+            date: str in format YYYYMMDD; or datetime
+                (localtime of the PV system)
+
+        Returns:
+            pd.DataFrame:
+                columns:  (all np.float64):
+                    system_id,
+                    datetime,
+                    instantaneous_power_gen_W,
+                    cumulative_energy_gen_Wh,
+                    instantaneous_power_gen_W,
+                    energy_consumption_Wh",
+                    temperature_C,
+                    voltage,
+        """
+        _LOG.info("system_id %d: Requesting batch system status for %s", pv_system_id, date)
+        date = date_to_pvoutput_str(date)
+        _check_date(date)
+
+        # join the system ids with a column
+        all_pv_system_id = ",".join([str(idx) for idx in pv_system_id])
+
+        api_params = {
+            "dt": date,  # date, YYYYMMDD, localtime of the PV system
+            "sid1": all_pv_system_id,  # SystemID.
+        }
+
+        try:
+            pv_system_status_text = self._api_query(
+                service="getsystemstatus", api_params=api_params, **kwargs
+            )
+
+        except NoStatusFound:
+            _LOG.info("system_id %d: No status found for date %s", pv_system_id, date)
+            pv_system_status_text = ""
+
+        # each pv system is on a new line
+        pv_systems_status_text = pv_system_status_text.split("\n")
+
+        # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
+        columns = [
+            "cumulative_energy_gen_Wh",
+            "instantaneous_power_gen_W",
+            "energy_consumption_Wh",
+            "temperature_C",
+            "voltage",
+        ]
+
+        pv_system_status = []
+        for pv_system_status_text in pv_systems_status_text:
+
+            # get system id
+            system_id = pv_system_status_text.split(";")[0]
+            pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
+
+            one_pv_system_status = pd.read_csv(
+                StringIO(pv_system_status_text),
+                lineterminator=";",
+                names=["time"] + columns,
+                dtype={col: np.float64 for col in columns},
+            ).sort_index()
+
+            # process dataframe
+            one_pv_system_status["system_id"] = system_id
+
+            # format date
+            one_pv_system_status["date"] = date
+            one_pv_system_status["date"] = pd.to_datetime(date)
+
+            # format time
+            one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
+                "%H:%M:%S"
+            )
+            one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
+
+            # make datetime
+            one_pv_system_status["datetime"] = (
+                one_pv_system_status["date"] + one_pv_system_status["time"]
+            )
+            one_pv_system_status.drop(columns=["date", "time"], inplace=True)
+
+            pv_system_status.append(one_pv_system_status)
+
+        pv_system_status = pd.concat(pv_system_status)
+        pv_system_status.reset_index(inplace=True)
 
         return pv_system_status
 
