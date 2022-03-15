@@ -299,7 +299,9 @@ class PVOutput:
                     temperature_C,
                     voltage,
         """
-        _LOG.info(f"system_ids {pv_system_ids}: Requesting batch system status for %s", pv_system_id, date)
+        _LOG.info(
+            f"system_ids {pv_system_ids}: Requesting batch system status for %s", pv_system_id, date
+        )
         date = date_to_pvoutput_str(date)
         _check_date(date)
 
