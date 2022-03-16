@@ -25,6 +25,8 @@ def get_pv_systems_for_country(
     region: Optional[str] = None,
 ) -> pd.DataFrame:
     """
+    Get all pv systems for on country
+
     Args:
         country: either a string such as 'United Kingdom'
             (see consts.PV_OUTPUT_COUNTRY_CODES for all recognised strings),
@@ -49,7 +51,6 @@ def get_pv_systems_for_country(
         total_energy_gen_Wh, average_daily_energy_gen_Wh
         average_efficiency_kWh_per_kW
     """
-
     country_code = _convert_to_country_code(country)
     regions = [region] if region else get_regions_for_country(country_code)
     all_metadata = []
@@ -91,9 +92,16 @@ def _create_map_url(
     region: Optional[str] = None,
 ) -> str:
     """
+    Create a map URL
+
     Args:
+        country_code: Country code
         page_number: Get this page number of the search results.  Zero-indexed.
             The first page is page 0, the second page is page 1, etc.
+        ascending: option for ascending or descending
+        sort_by: sort results by (optional)
+        region: region of country (optional)
+
     """
     _check_country_code(country_code)
 
@@ -321,6 +329,15 @@ def _page_is_blank(soup: BeautifulSoup) -> bool:
 
 
 def get_soup(url, raw=False, parser="html.parser"):
+    """
+    Get soupt from url
+
+    Args:
+        url: URL
+        raw: option for raw, defaulted to False
+        parser: parser for BeautifulSoup
+
+    """
     response = requests.get(url)
     soup = BeautifulSoup(response.text, parser)
     if raw:
@@ -329,8 +346,9 @@ def get_soup(url, raw=False, parser="html.parser"):
 
 
 def clean_soup(soup):
-    """Function to clean scraped soup object. The downloaded soup could change
-        over time.
+    """Function to clean scraped soup object.
+
+    Note that the downloaded soup could change over time.
     Args:
         soup: bs4.BeautifulSoup
 
@@ -344,6 +362,14 @@ def clean_soup(soup):
 
 
 def get_regions_for_country(country_code: int):
+    """
+    Get regions for on countruy
+
+    Args:
+        country_code: the country code
+
+    Returns: list of regions
+    """
     region_list = []
     url = f"{REGIONS_URL}?country={country_code}"
     soup = get_soup(url, parser="lxml")
