@@ -338,7 +338,6 @@ class PVOutput:
         columns = [
             "cumulative_energy_gen_Wh",
             "instantaneous_power_gen_W",
-            "energy_consumption_Wh",
             "temperature_C",
             "voltage",
         ]
