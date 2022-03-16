@@ -174,7 +174,7 @@ def clip_to_bbox(
     """
     if search_radius is None:
         # TODO why is bounds not used
-        bounds = buffer_bounding_box_bounds(bbox, buffer, local_crs_epsg) # noqa
+        bounds = buffer_bounding_box_bounds(bbox, buffer, local_crs_epsg)  # noqa
         coords["selected"] = (bbox[0] <= coords.latitude <= bbox[2]) & (
             bbox[1] <= coords.longitude <= bbox[3]
         )
