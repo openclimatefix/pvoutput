@@ -12,6 +12,19 @@ def test_init():
     _ = pvoutput.PVOutput(api_key="fake", system_id="fake")
 
 
+def test_rate_limit():
+    pv = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+    # set a fake reset time
+    pv.rate_limit_reset_time = pd.Timestamp.utcnow() + pd.Timedelta(minutes=30)
+
+    # get the number of seconds we need to wait
+    seconds_to_wait = pv.wait_for_rate_limit_reset(do_sleeping=False)
+
+    # 30 mins, + 3 mins for safety
+    assert np.round(seconds_to_wait) == 30*60 + (60*3)
+
+
 @pytest.mark.skip("Currently not working in CI")
 def test_get_status():
     pv = pvoutput.PVOutput()
