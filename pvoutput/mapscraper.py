@@ -81,7 +81,7 @@ def get_pv_systems_for_country(
     return pd.concat(all_metadata)
 
 
-############ LOAD HTML ###################
+# ########### LOAD HTML ###################
 
 
 def _create_map_url(
@@ -174,7 +174,7 @@ def _page_has_next_link(soup: BeautifulSoup):
     return bool(soup.find_all("a", text="Next"))
 
 
-############# PROCESS HTML #########################
+# ############ PROCESS HTML #########################
 
 
 def _process_metadata(soup: BeautifulSoup, return_constituents=False) -> pd.DataFrame:
@@ -198,14 +198,14 @@ def _process_metadata(soup: BeautifulSoup, return_constituents=False) -> pd.Data
 
 
 def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
-    pv_system_size_col = soup.find_all("a", href=re.compile("display\.jsp\?sid="))
+    pv_system_size_col = soup.find_all("a", href=re.compile(r"display\.jsp\?sid="))
     metadata = []
     for row in pv_system_size_col:
         metadata_for_row = {}
 
         # Get system ID
         href = row.attrs["href"]
-        p = re.compile("^display\.jsp\?sid=(\d+)$")
+        p = re.compile(r"^display\.jsp\?sid=(\d+)$")
         href_match = p.match(href)
         metadata_for_row["system_id"] = href_match.group(1)
 
@@ -213,7 +213,7 @@ def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
         title, title_meta = row.attrs["title"].split("|")
 
         # Name and capacity
-        p = re.compile("(.*) (\d+\.\d+kW)")
+        p = re.compile(r"(.*) (\d+\.\d+kW)")
         title_match = p.match(title)
         metadata_for_row["name"] = title_match.group(1)
         metadata_for_row["capacity"] = title_match.group(2)
@@ -232,7 +232,7 @@ def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
         # Some cleaning
         # Remove <img ...> from Location
         location = metadata_for_row["Location"]
-        p = re.compile("(<img .*\>)?(.*)")
+        p = re.compile(r"(<img .*\>)?(.*)")
         img_groups = p.search(location).groups()
         if img_groups[0] is not None:
             metadata_for_row["Location"] = img_groups[1].strip()
@@ -275,7 +275,7 @@ def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
 def _process_output_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
 
     # get all data
-    outputs_col = soup.find_all(text=re.compile("\d Days"))
+    outputs_col = soup.find_all(text=re.compile(r"\d Days"))
 
     # format data as strings
     outputs_col = [str(col) for col in outputs_col]
@@ -303,7 +303,7 @@ def _process_generation_and_average_cols(
 ) -> pd.DataFrame:
     # _soup = deepcopy(soup)
     [s.decompose() for s in soup.select("a")]
-    generation_and_average_cols = soup.find_all(text=re.compile("\d[Mk]Wh$"))
+    generation_and_average_cols = soup.find_all(text=re.compile(r"\d[Mk]Wh$"))
     generation_col = generation_and_average_cols[0::2]
     average_col = generation_and_average_cols[1::2]
     df = pd.DataFrame(
@@ -318,13 +318,13 @@ def _process_generation_and_average_cols(
 
 
 def _process_efficiency_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
-    efficiency_col = soup.find_all(text=re.compile("\dkWh/kW"))
+    efficiency_col = soup.find_all(text=re.compile(r"\dkWh/kW"))
     return pd.Series(efficiency_col, name="average_efficiency_kWh_per_kW", index=index)
 
 
 def _page_is_blank(soup: BeautifulSoup) -> bool:
     # Pages can still be blank even if the previous page has a Next Button
-    pv_system_size_col = soup.find_all("a", href=re.compile("display\.jsp\?sid="))
+    pv_system_size_col = soup.find_all("a", href=re.compile(r"display\.jsp\?sid="))
     return not bool(pv_system_size_col)
 
 
@@ -373,10 +373,10 @@ def get_regions_for_country(country_code: int):
     region_list = []
     url = f"{REGIONS_URL}?country={country_code}"
     soup = get_soup(url, parser="lxml")
-    region_tags = soup.find_all("a", href=re.compile("map\.jsp\?country="))
+    region_tags = soup.find_all("a", href=re.compile(r"map\.jsp\?country="))
     for row in region_tags:
         href = row.attrs["href"]
-        p = re.compile("^map\.jsp\?country=243&region=(\w+.*)$")
+        p = re.compile(r"^map\.jsp\?country=243&region=(\w+.*)$")
         href_match = p.match(href)
         region = href_match.group(1)
         region_list.append(region)

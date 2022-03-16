@@ -224,7 +224,7 @@ class PVOutput:
 
         api_params = {
             "d": date,  # date, YYYYMMDD, localtime of the PV system
-            "h": int(historic == True),  # We want historical data.
+            "h": int(historic is True),  # We want historical data.
             "limit": 288,  # API limit is 288 (num of 5-min periods per day).
             "ext": 0,  # Extended data; we don't want extended data.
             "sid1": pv_system_id,  # SystemID.
