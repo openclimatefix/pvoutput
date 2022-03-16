@@ -382,7 +382,11 @@ class PVOutput:
 
         # add timezone
         if timezone is not None:
-            pv_system_status['datetime'] = pd.DatetimeIndex(pv_system_status['datetime']).tz_localize(timezone).tz_convert("UTC")
+            pv_system_status["datetime"] = (
+                pd.DatetimeIndex(pv_system_status["datetime"])
+                .tz_localize(timezone)
+                .tz_convert("UTC")
+            )
 
         return pv_system_status
 
