@@ -1,3 +1,4 @@
+""" Code for scraping for pv systems """
 import re
 from copy import copy
 from typing import Iterable, Optional, Union
@@ -40,6 +41,7 @@ def get_pv_systems_for_country(
             address,
             name
         max_pages: The maximum number of search pages to scrape.
+        region: Optional input, #TODO
 
     Returns: pd.DataFrame with index system_id (int) and these columns:
         name, system_DC_capacity_W, panel, inverter, address, orientation,

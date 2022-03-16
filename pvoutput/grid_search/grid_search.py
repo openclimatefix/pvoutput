@@ -24,11 +24,10 @@ class GridSearch:
     """A class for generating a gridded search."""
 
     def __init__(self, cache_dir: str = None) -> None:
-        """Initialise.
+        """ Initialise.
 
         Args:
-            cache_dir:
-                Optionally provide a location to cache boundary definition files locally and avoid
+            cache_dir: Optionally provide a location to cache boundary definition files locally and avoid
                 unnecsessary downloads.
         """
         self.nat_earth = NaturalEarth(cache_dir)
@@ -46,22 +45,17 @@ class GridSearch:
         Plot grid coordinates over world boundaries with selected countries highlighted.
 
         Args:
-            coords:
-                A geopandas GeoDataFrame containing latitudes, longitudes and geometries for a set
+            coords: A geopandas GeoDataFrame containing latitudes, longitudes and geometries for a set
                 of coordinates.
-            countries:
-                A list of country names to clip the coords to.
-            bbox:
-                Optionally pass a four element iterable defining a bounding box:
+            countries: A list of country names to clip the coords to.
+            bbox: Optionally pass a four element iterable defining a bounding box:
                 [min_lat, min_lon, max_lat, max_lon]. This will be used to set the scale of the
                 plot.
-            local_crs_epsg:
-                Optionally provide the EPSG code of a local Co-ordinate Reference System (CRS) for
+            local_crs_epsg: Optionally provide the EPSG code of a local Co-ordinate Reference System (CRS) for
                 improved accuracy. e.g. set to 27700 (OSGB36 / British National Grid) if searching
                 the British Isles. The default is EPSG:4087 (a.k.a WGS 84 / World Equidistant
                 Cylindrical), which works globally but with less accuracy.
-            filename:
-                Optionally pass a filename (relative or absolute) to save the plot to. Image format
+            filename: Optionally pass a filename (relative or absolute) to save the plot to. Image format
                 should be set using the file extension (i.e. .jpeg, .png or .svg).
         """
         world, _ = self.nat_earth.get_hires_world_boundaries()
