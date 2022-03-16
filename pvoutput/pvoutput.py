@@ -184,6 +184,7 @@ class PVOutput:
         pv_system_id: int,
         date: Union[str, datetime],
         historic: bool = True,
+        timezone: Optional[str] = None,
         **kwargs,
     ) -> pd.DataFrame:
         """Get PV system status (e.g. power generation) for one day.
@@ -195,6 +196,8 @@ class PVOutput:
             pv_system_id: int
             date: str in format YYYYMMDD; or datetime
                 (localtime of the PV system)
+            timezone: the timezone of the systems. This will be used to add to the datetime.
+                If None, it is not added
 
         Returns:
             pd.DataFrame:
@@ -267,12 +270,17 @@ class PVOutput:
             dtype={col: np.float64 for col in columns},
         ).sort_index()
 
+        # add timezone
+        if timezone is not None:
+            pv_system_status = pv_system_status.tz_localize(timezone).tz_convert("UTC")
+
         return pv_system_status
 
     def get_system_status(
         self,
         pv_system_ids: List[int],
         date: Union[str, datetime],
+        timezone: Optional[str] = None,
         **kwargs,
     ) -> pd.DataFrame:
         """Get Batch of PV system status (e.g. power generation) for one day, for multiple systems
@@ -286,6 +294,8 @@ class PVOutput:
                 pv systems status can be queries at once
             date: str in format YYYYMMDD; or datetime
                 (localtime of the PV system)
+            timezone: the timezone of the systems. This will be used to add to the datetime.
+                If None, it is not added
 
         Returns:
             pd.DataFrame:
@@ -317,7 +327,7 @@ class PVOutput:
             )
 
         except NoStatusFound:
-            _LOG.info("system_id %d: No status found for date %s", pv_system_id, date)
+            _LOG.info(f"system_id {all_pv_system_id}: No status found for date %s", date)
             pv_system_status_text = ""
 
         # each pv system is on a new line
@@ -369,6 +379,14 @@ class PVOutput:
 
         pv_system_status = pd.concat(pv_system_status)
         pv_system_status.reset_index(inplace=True)
+
+        # add timezone
+        if timezone is not None:
+            pv_system_status["datetime"] = (
+                pd.DatetimeIndex(pv_system_status["datetime"])
+                .tz_localize(timezone)
+                .tz_convert("UTC")
+            )
 
         return pv_system_status
 

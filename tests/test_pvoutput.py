@@ -15,14 +15,22 @@ def test_init():
 @pytest.mark.skip("Currently not working in CI")
 def test_get_status():
     pv = pvoutput.PVOutput()
-    pv.get_status(pv_system_id=10033, date=datetime(2022, 3, 1, 12), use_data_service=True)
+    pv.get_status(
+        pv_system_id=10033,
+        date=datetime(2022, 3, 1, 12),
+        use_data_service=True,
+        timezone="Europe/London",
+    )
 
 
 @pytest.mark.skip("Currently not working in CI")
 def test_multiple_get_status():
     pv = pvoutput.PVOutput()
     status_df = pv.get_system_status(
-        pv_system_id=[10033, 10020], date=datetime(2022, 3, 15), use_data_service=True
+        pv_system_ids=[10033, 10020],
+        date=datetime(2022, 3, 15),
+        use_data_service=True,
+        timezone="Europe/London",
     )
 
     assert len(status_df) > 0
