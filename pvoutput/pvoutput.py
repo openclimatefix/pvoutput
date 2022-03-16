@@ -1118,6 +1118,8 @@ class PVOutput:
         timedelta_to_wait += timedelta(minutes=3)  # Just for safety
         secs_to_wait = timedelta_to_wait.total_seconds()
         retry_time_utc = utc_now + timedelta_to_wait
+
+        # good to have the retry time in local so that user see 'their' time
         retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
         _print_and_log(
             "Waiting {:.0f} seconds.  Will retry at {}".format(secs_to_wait, retry_time_local)
