@@ -169,7 +169,7 @@ def parse_options():
 
 
 def main():
-    """ Run main app"""
+    """Run main app"""
     options = parse_options()
     grd = GridSearch(cache_dir=options.cache_dir)
     if options.list_countries:

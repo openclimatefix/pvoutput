@@ -1087,7 +1087,7 @@ class PVOutput:
         _LOG.debug("%s", self.rate_limit_info())
 
     def rate_limit_info(self) -> Dict:
-        """ Get the rate limit information """
+        """Get the rate limit information"""
         info = {}
         for param_name in RATE_LIMIT_PARAMS_TO_API_HEADERS:
             info[param_name] = getattr(self, param_name)

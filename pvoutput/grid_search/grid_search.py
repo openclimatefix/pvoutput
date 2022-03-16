@@ -24,7 +24,7 @@ class GridSearch:
     """A class for generating a gridded search."""
 
     def __init__(self, cache_dir: str = None) -> None:
-        """ Initialise.
+        """Initialise.
 
         Args:
             cache_dir: Optionally provide a location to cache boundary definition files locally and avoid

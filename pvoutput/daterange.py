@@ -9,12 +9,13 @@ import pandas as pd
 
 @dataclass
 class DateRange:
-    """ Date Range Class"""
+    """Date Range Class"""
+
     start_date: date
     end_date: date
 
     def __init__(self, start_date, end_date):
-        """ Init """
+        """Init"""
         self.start_date = safe_convert_to_date(start_date)
         self.end_date = safe_convert_to_date(end_date)
 
