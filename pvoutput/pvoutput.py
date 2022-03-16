@@ -350,12 +350,16 @@ class PVOutput:
             system_id = pv_system_status_text.split(";")[0]
             pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
 
-            one_pv_system_status = pd.read_csv(
-                StringIO(pv_system_status_text),
-                lineterminator=";",
-                names=["time"] + columns,
-                dtype={col: np.float64 for col in columns},
-            ).sort_index()
+            try:
+                one_pv_system_status = pd.read_csv(
+                    StringIO(pv_system_status_text),
+                    lineterminator=";",
+                    names=["time"] + columns,
+                    dtype={col: np.float64 for col in columns},
+                ).sort_index()
+            except Exception as e:
+                _LOG.error(f'Could not change raw text into dataframe. Raw text is {pv_system_status_text}')
+                raise e
 
             # process dataframe
             one_pv_system_status["system_id"] = system_id
