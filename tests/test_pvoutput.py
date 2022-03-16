@@ -22,7 +22,7 @@ def test_rate_limit():
     seconds_to_wait = pv.wait_for_rate_limit_reset(do_sleeping=False)
 
     # 30 mins, + 3 mins for safety
-    assert np.round(seconds_to_wait) == 30*60 + (60*3)
+    assert np.round(seconds_to_wait) == 30 * 60 + (60 * 3)
 
 
 @pytest.mark.skip("Currently not working in CI")
