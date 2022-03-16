@@ -3,7 +3,6 @@ import os
 import time
 import warnings
 from datetime import date, datetime, timedelta
-from dateutil.tz import tzlocal
 from io import StringIO
 from typing import Dict, Iterable, List, Optional, Union
 from urllib.parse import urljoin
@@ -12,6 +11,7 @@ import numpy as np
 import pandas as pd
 import requests
 import tables
+from dateutil.tz import tzlocal
 
 from pvoutput.consts import (
     BASE_URL,
