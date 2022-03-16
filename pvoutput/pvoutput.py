@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import requests
 import tables
+from dateutil.tz import tzlocal
 
 from pvoutput.consts import (
     BASE_URL,
@@ -1103,16 +1104,30 @@ class PVOutput:
         # If we get to here then the content is valid :)
         return content
 
-    def wait_for_rate_limit_reset(self):
+    def wait_for_rate_limit_reset(self, do_sleeping: bool = True) -> int:
+        """
+        Wait for reset limit
+
+        Args:
+            do_sleeping: bool to do the sleeping, or not.
+
+        Returns: The number of seconds needed to sleep
+        """
         utc_now = pd.Timestamp.utcnow()
         timedelta_to_wait = self.rate_limit_reset_time - utc_now
         timedelta_to_wait += timedelta(minutes=3)  # Just for safety
         secs_to_wait = timedelta_to_wait.total_seconds()
         retry_time_utc = utc_now + timedelta_to_wait
+
+        # good to have the retry time in local so that user see 'their' time
+        retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
         _print_and_log(
-            "Waiting {:.0f} seconds.  Will retry at {}".format(secs_to_wait, retry_time_utc)
+            "Waiting {:.0f} seconds.  Will retry at {}".format(secs_to_wait, retry_time_local)
         )
-        time.sleep(secs_to_wait)
+        if do_sleeping:
+            time.sleep(secs_to_wait)
+
+        return secs_to_wait
 
 
 def date_to_pvoutput_str(date: Union[str, datetime]) -> str:
