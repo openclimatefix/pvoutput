@@ -358,7 +358,9 @@ class PVOutput:
                     dtype={col: np.float64 for col in columns},
                 ).sort_index()
             except Exception as e:
-                _LOG.error(f'Could not change raw text into dataframe. Raw text is {pv_system_status_text}')
+                _LOG.error(
+                    f"Could not change raw text into dataframe. Raw text is {pv_system_status_text}"
+                )
                 raise e
 
             # process dataframe
