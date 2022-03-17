@@ -339,14 +339,6 @@ class PVOutput:
         # each pv system is on a new line
         pv_systems_status_text = pv_system_status_text.split("\n")
 
-        # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
-        columns = [
-            "cumulative_energy_gen_Wh",
-            "instantaneous_power_gen_W",
-            "temperature_C",
-            "voltage",
-        ]
-
         pv_system_status = []
         for pv_system_status_text in pv_systems_status_text:
 
