@@ -36,8 +36,9 @@ def test_get_status():
         timezone="Europe/London",
     )
 
+
 def test_multiple_get_status_process():
-    pv_system_status_text='1234;07:45,21,255'
+    pv_system_status_text = "1234;07:45,21,255"
 
     one_status = pvoutput.prcoess.process_system_status(pv_system_status_text=pv_system_status_text)
 
@@ -108,5 +109,3 @@ def test_check_pv_system_status():
     bad_timeseries2 = _make_timeseries("2019-01-02 00:00", "2019-01-03 00:00")
     with pytest.raises(ValueError):
         pvoutput.check_pv_system_status(bad_timeseries2, DATE)
-
-

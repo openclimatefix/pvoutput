@@ -23,7 +23,7 @@ from pvoutput.consts import (
 )
 from pvoutput.daterange import DateRange, merge_date_ranges_to_years
 from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
-from pvoutput.prcoess import process_system_status, process_batch_status
+from pvoutput.prcoess import process_batch_status, process_system_status
 from pvoutput.utils import (
     _get_param_from_config_file,
     _get_response,
@@ -351,7 +351,9 @@ class PVOutput:
         for pv_system_status_text in pv_systems_status_text:
 
             try:
-                one_pv_system_status = process_system_status(pv_system_status_text=pv_system_status_text,date=date)
+                one_pv_system_status = process_system_status(
+                    pv_system_status_text=pv_system_status_text, date=date
+                )
             except Exception as e:
                 _LOG.error(
                     f"Could not change raw text into dataframe. Raw text is {pv_system_status_text}"
