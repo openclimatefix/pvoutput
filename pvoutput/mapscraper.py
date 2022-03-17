@@ -1,3 +1,4 @@
+""" Code for scraping for pv systems """
 import re
 from copy import copy
 from typing import Iterable, Optional, Union
@@ -24,6 +25,8 @@ def get_pv_systems_for_country(
     region: Optional[str] = None,
 ) -> pd.DataFrame:
     """
+    Get all pv systems for on country
+
     Args:
         country: either a string such as 'United Kingdom'
             (see consts.PV_OUTPUT_COUNTRY_CODES for all recognised strings),
@@ -40,6 +43,7 @@ def get_pv_systems_for_country(
             address,
             name
         max_pages: The maximum number of search pages to scrape.
+        region: Optional input, #TODO
 
     Returns: pd.DataFrame with index system_id (int) and these columns:
         name, system_DC_capacity_W, panel, inverter, address, orientation,
@@ -47,7 +51,6 @@ def get_pv_systems_for_country(
         total_energy_gen_Wh, average_daily_energy_gen_Wh
         average_efficiency_kWh_per_kW
     """
-
     country_code = _convert_to_country_code(country)
     regions = [region] if region else get_regions_for_country(country_code)
     all_metadata = []
@@ -78,7 +81,7 @@ def get_pv_systems_for_country(
     return pd.concat(all_metadata)
 
 
-############ LOAD HTML ###################
+# ########### LOAD HTML ###################
 
 
 def _create_map_url(
@@ -89,9 +92,16 @@ def _create_map_url(
     region: Optional[str] = None,
 ) -> str:
     """
+    Create a map URL
+
     Args:
+        country_code: Country code
         page_number: Get this page number of the search results.  Zero-indexed.
             The first page is page 0, the second page is page 1, etc.
+        ascending: option for ascending or descending
+        sort_by: sort results by (optional)
+        region: region of country (optional)
+
     """
     _check_country_code(country_code)
 
@@ -164,7 +174,7 @@ def _page_has_next_link(soup: BeautifulSoup):
     return bool(soup.find_all("a", text="Next"))
 
 
-############# PROCESS HTML #########################
+# ############ PROCESS HTML #########################
 
 
 def _process_metadata(soup: BeautifulSoup, return_constituents=False) -> pd.DataFrame:
@@ -188,14 +198,14 @@ def _process_metadata(soup: BeautifulSoup, return_constituents=False) -> pd.Data
 
 
 def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
-    pv_system_size_col = soup.find_all("a", href=re.compile("display\.jsp\?sid="))
+    pv_system_size_col = soup.find_all("a", href=re.compile(r"display\.jsp\?sid="))
     metadata = []
     for row in pv_system_size_col:
         metadata_for_row = {}
 
         # Get system ID
         href = row.attrs["href"]
-        p = re.compile("^display\.jsp\?sid=(\d+)$")
+        p = re.compile(r"^display\.jsp\?sid=(\d+)$")
         href_match = p.match(href)
         metadata_for_row["system_id"] = href_match.group(1)
 
@@ -203,7 +213,7 @@ def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
         title, title_meta = row.attrs["title"].split("|")
 
         # Name and capacity
-        p = re.compile("(.*) (\d+\.\d+kW)")
+        p = re.compile(r"(.*) (\d+\.\d+kW)")
         title_match = p.match(title)
         metadata_for_row["name"] = title_match.group(1)
         metadata_for_row["capacity"] = title_match.group(2)
@@ -222,7 +232,7 @@ def _process_system_size_col(soup: BeautifulSoup) -> pd.DataFrame:
         # Some cleaning
         # Remove <img ...> from Location
         location = metadata_for_row["Location"]
-        p = re.compile("(<img .*\>)?(.*)")
+        p = re.compile(r"(<img .*\>)?(.*)")
         img_groups = p.search(location).groups()
         if img_groups[0] is not None:
             metadata_for_row["Location"] = img_groups[1].strip()
@@ -265,7 +275,7 @@ def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
 def _process_output_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
 
     # get all data
-    outputs_col = soup.find_all(text=re.compile("\d Days"))
+    outputs_col = soup.find_all(text=re.compile(r"\d Days"))
 
     # format data as strings
     outputs_col = [str(col) for col in outputs_col]
@@ -293,7 +303,7 @@ def _process_generation_and_average_cols(
 ) -> pd.DataFrame:
     # _soup = deepcopy(soup)
     [s.decompose() for s in soup.select("a")]
-    generation_and_average_cols = soup.find_all(text=re.compile("\d[Mk]Wh$"))
+    generation_and_average_cols = soup.find_all(text=re.compile(r"\d[Mk]Wh$"))
     generation_col = generation_and_average_cols[0::2]
     average_col = generation_and_average_cols[1::2]
     df = pd.DataFrame(
@@ -308,17 +318,26 @@ def _process_generation_and_average_cols(
 
 
 def _process_efficiency_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
-    efficiency_col = soup.find_all(text=re.compile("\dkWh/kW"))
+    efficiency_col = soup.find_all(text=re.compile(r"\dkWh/kW"))
     return pd.Series(efficiency_col, name="average_efficiency_kWh_per_kW", index=index)
 
 
 def _page_is_blank(soup: BeautifulSoup) -> bool:
     # Pages can still be blank even if the previous page has a Next Button
-    pv_system_size_col = soup.find_all("a", href=re.compile("display\.jsp\?sid="))
+    pv_system_size_col = soup.find_all("a", href=re.compile(r"display\.jsp\?sid="))
     return not bool(pv_system_size_col)
 
 
 def get_soup(url, raw=False, parser="html.parser"):
+    """
+    Get soupt from url
+
+    Args:
+        url: URL
+        raw: option for raw, defaulted to False
+        parser: parser for BeautifulSoup
+
+    """
     response = requests.get(url)
     soup = BeautifulSoup(response.text, parser)
     if raw:
@@ -327,8 +346,9 @@ def get_soup(url, raw=False, parser="html.parser"):
 
 
 def clean_soup(soup):
-    """Function to clean scraped soup object. The downloaded soup could change
-        over time.
+    """Function to clean scraped soup object.
+
+    Note that the downloaded soup could change over time.
     Args:
         soup: bs4.BeautifulSoup
 
@@ -342,13 +362,21 @@ def clean_soup(soup):
 
 
 def get_regions_for_country(country_code: int):
+    """
+    Get regions for on countruy
+
+    Args:
+        country_code: the country code
+
+    Returns: list of regions
+    """
     region_list = []
     url = f"{REGIONS_URL}?country={country_code}"
     soup = get_soup(url, parser="lxml")
-    region_tags = soup.find_all("a", href=re.compile("map\.jsp\?country="))
+    region_tags = soup.find_all("a", href=re.compile(r"map\.jsp\?country="))
     for row in region_tags:
         href = row.attrs["href"]
-        p = re.compile("^map\.jsp\?country=243&region=(\w+.*)$")
+        p = re.compile(r"^map\.jsp\?country=243&region=(\w+.*)$")
         href_match = p.match(href)
         region = href_match.group(1)
         region_list.append(region)

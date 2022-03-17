@@ -1,3 +1,4 @@
+""" Main PV Output class to get data from pvoutput.org """
 import logging
 import os
 import time
@@ -36,6 +37,8 @@ _LOG = logging.getLogger("pvoutput")
 
 class PVOutput:
     """
+    Main PV Output class
+
     Attributes:
         api_key
         system_id
@@ -53,6 +56,8 @@ class PVOutput:
         data_service_url: Optional[str] = os.getenv("DATA_SERVICE_URL"),
     ):
         """
+        Init
+
         Args:
             api_key: Your API key from PVOutput.org.
             system_id: Your system ID from PVOutput.org.  If you don't have a
@@ -63,7 +68,6 @@ class PVOutput:
                 PVOutput.org's data service then add the data service URL here.
                 This string must end in '.org'.
         """
-
         self.api_key = api_key
         self.system_id = system_id
         self.rate_limit_remaining = None
@@ -220,7 +224,7 @@ class PVOutput:
 
         api_params = {
             "d": date,  # date, YYYYMMDD, localtime of the PV system
-            "h": int(historic == True),  # We want historical data.
+            "h": int(historic is True),  # We want historical data.
             "limit": 288,  # API limit is 288 (num of 5-min periods per day).
             "ext": 0,  # Extended data; we don't want extended data.
             "sid1": pv_system_id,  # SystemID.
@@ -638,13 +642,25 @@ class PVOutput:
         date_to: Optional[Union[str, date]] = None,
         **kwargs,
     ) -> pd.Series:
-        """Will try to get stats from store_filename['statistics'].  If this
+        """
+        Get Statistic using cache
+
+        Will try to get stats from store_filename['statistics'].  If this
         fails, or if date_to > query_date_to, or if
         date_from < query_date_from, then will call the API.  Note that the aim
         of this function is just to find the relevant actual_date_from and
         actual_date_to, so this function does not respect the other params.
-        """
 
+        Args:
+            store_filename: cache filenamte
+            pv_system_id: pv system id
+            date_from: the start date we want statistics from
+            date_to: the end date we want statistics from
+            **kwargs:
+
+        Returns: Pandas data series holding various statistics
+
+        """
         if date_from:
             date_from = pd.Timestamp(date_from).date()
         if date_to:
@@ -774,8 +790,12 @@ class PVOutput:
         lon: Optional[float] = None,
         **kwargs,
     ):
-        """Get Insolation data for a given site, or a given location defined by
-        longitude and latitude. This is the estimated output for the site
+        """Get Insolation forecast data
+
+        This is for a given site, or a given location defined by
+        longitude and latitude.
+
+        This is the estimated output for the site
         based on ideal weather conditions. Also factors in site age, reducing
         ouput by 1% each year, shade and orientation. Need donation mode enabled.
         See https://pvoutput.org/help.html#api-getinsolation
@@ -790,7 +810,7 @@ class PVOutput:
             **kwargs:
 
 
-        Returns:
+        Returns: dataframe of the insolution forecast
 
         """
         date = date_to_pvoutput_str(date)
@@ -901,6 +921,8 @@ class PVOutput:
         self, output_filename, pv_system_id, dates, timezone, use_get_status
     ) -> int:
         """
+        Download data with multiple workers
+
         Returns:
             total number of rows downloaded
         """
@@ -1009,6 +1031,8 @@ class PVOutput:
 
     def _get_api_response(self, service: str, api_params: Dict) -> requests.Response:
         """
+        Get the non-data service (free) response from pvoutput.org
+
         Args:
             service: string, e.g. 'search', 'getstatus'
             api_params: dict
@@ -1027,6 +1051,8 @@ class PVOutput:
 
     def _get_data_service_response(self, service: str, api_params: Dict) -> requests.Response:
         """
+        Get the data service response from pvoutput.org
+
         Args:
             service: string, e.g. 'getbatchstatus'
             api_params: dict
@@ -1061,6 +1087,7 @@ class PVOutput:
         _LOG.debug("%s", self.rate_limit_info())
 
     def rate_limit_info(self) -> Dict:
+        """Get the rate limit information"""
         info = {}
         for param_name in RATE_LIMIT_PARAMS_TO_API_HEADERS:
             info[param_name] = getattr(self, param_name)
@@ -1148,8 +1175,10 @@ def date_to_pvoutput_str(date: Union[str, datetime]) -> str:
 
 
 def _check_date(date: str, prediction=False):
-    """Check that date string conforms to YYYYMMDD format,
-    and that the date isn't in the future.
+    """Check that date string
+
+    1. conforms to YYYYMMDD format,
+    2. that the date isn't in the future.
 
     Raises:
         ValueError if the date is 'bad'.

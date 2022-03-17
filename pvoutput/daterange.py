@@ -1,3 +1,4 @@
+"""Date Range Class """
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Iterable, List, Union
@@ -8,23 +9,35 @@ import pandas as pd
 
 @dataclass
 class DateRange:
+    """Date Range Class"""
+
     start_date: date
     end_date: date
 
     def __init__(self, start_date, end_date):
+        """Init"""
         self.start_date = safe_convert_to_date(start_date)
         self.end_date = safe_convert_to_date(end_date)
 
     def intersection(self, other):
+        """
+        Get intersection of this DateRange and other
+        """
         new_start = max(self.start_date, other.start_date)
         new_end = min(self.end_date, other.end_date)
         if new_start < new_end:
             return DateRange(new_start, new_end)
 
     def date_range(self) -> np.array:
+        """
+        Make date range
+        """
         return pd.date_range(self.start_date, self.end_date, freq="D").date
 
     def total_days(self) -> int:
+        """
+        Find the total number of days
+        """
         return (
             np.timedelta64(self.end_date - self.start_date)
             .astype("timedelta64[D]")
@@ -32,6 +45,10 @@ class DateRange:
         )
 
     def split_into_years(self) -> List:
+        """
+        Split start and end dates into list of years
+
+        """
         duration = self.end_date - self.start_date
         num_years = duration / timedelta(days=365)
         if num_years <= 1:
@@ -49,6 +66,14 @@ class DateRange:
 
 
 def get_date_range_list(dates: Iterable[date]) -> List[DateRange]:
+    """
+    Get data range lists for dates
+
+    Args:
+        dates: list of dates
+
+    Returns: list of date ranges
+    """
     if not dates:
         return []
     dates = np.array(dates)
@@ -70,6 +95,14 @@ def get_date_range_list(dates: Iterable[date]) -> List[DateRange]:
 
 
 def safe_convert_to_date(dt: Union[datetime, date, str]) -> date:
+    """
+    Convert datetime to date
+
+    Args:
+        dt: datetime, date or string
+
+    Returns: date
+    """
     if isinstance(dt, str):
         dt = pd.Timestamp(dt)
     if isinstance(dt, datetime):
@@ -80,6 +113,8 @@ def safe_convert_to_date(dt: Union[datetime, date, str]) -> date:
 
 def merge_date_ranges_to_years(date_ranges: Iterable[DateRange]) -> List[DateRange]:
     """
+    Merge date ranges to years
+
     Args:
         date_ranges: List of DateRanges, in ascending chronological order.
 

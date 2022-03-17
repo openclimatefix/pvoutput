@@ -1,3 +1,4 @@
+""" Util functions"""
 import logging
 import os
 import sys
@@ -31,6 +32,17 @@ def _get_param_from_config_file(param_name, config_filename=CONFIG_FILENAME):
 
 
 def get_logger(filename=None, mode="a", level=logging.DEBUG, stream_handler=False):
+    """
+    Get a logger
+
+    Args:
+        filename: get file handler filename
+        mode: file handler mode
+        level: logging level
+        stream_handler: option to make a stream handler aswell
+
+    Returns: logger
+    """
     if filename is None:
         filename = _get_param_from_config_file("log_filename")
     logger = logging.getLogger("pvoutput")
@@ -88,6 +100,14 @@ def _print_and_log(msg: str, level: int = logging.INFO):
 
 
 def get_system_ids_in_store(store_filename: str) -> List[int]:
+    """
+    Get system ids in the hdf store
+
+    Args:
+        store_filename: hdf file name
+
+    Returns: list of systems ids
+    """
     if not os.path.exists(store_filename):
         return []
     with pd.HDFStore(store_filename, mode="r") as store:
@@ -101,7 +121,10 @@ def get_date_ranges_to_download(
     start_date: Union[str, datetime],
     end_date: Union[str, datetime],
 ) -> List[DateRange]:
-    """If system_id in store, check if it already has data from
+    """
+    Get the date ranges that we need downloaded
+
+    If system_id in store, check if it already has data from
     start_date to end_date, taking into consideration missing_dates.
 
     Returns: list of DateRange objects
@@ -118,6 +141,15 @@ def get_date_ranges_to_download(
 
 
 def get_missing_dates_for_id(store_filename: str, system_id: int) -> List:
+    """
+    Get missing dates for on pv system id
+
+    Args:
+        store_filename: filename fo hdf store
+        system_id: system id
+
+    Returns: list of missing dates
+    """
     if not os.path.exists(store_filename):
         return []
 
@@ -143,12 +175,30 @@ def get_missing_dates_for_id(store_filename: str, system_id: int) -> List:
 
 
 def datetime_list_to_dates(datetimes: Iterable[datetime]) -> Iterable[date]:
+    """
+    Change datetime list to dates
+
+    Args:
+        datetimes: list of datetimes
+
+    Returns: datetime index of dates
+    """
     if not isinstance(datetimes, Iterable):
         datetimes = [datetimes]
     return pd.DatetimeIndex(datetimes).date
 
 
 def get_dates_already_downloaded(store_filename, system_id) -> set:
+    """
+    Get the dates that have already been downloaded
+
+    Args:
+        store_filename: filename of hdf file
+        system_id: one system id
+
+    Returns: set of datetimes already downloaded
+
+    """
     if not os.path.exists(store_filename):
         return set([])
 
@@ -164,10 +214,26 @@ def get_dates_already_downloaded(store_filename, system_id) -> set:
 
 
 def system_id_to_hdf_key(system_id: int) -> str:
+    """
+    Change system id to a hdf key
+
+    Args:
+        system_id: system id
+
+    Returns: key
+    """
     return "/timeseries/{:d}".format(system_id)
 
 
 def sort_and_de_dupe_pv_system(store, pv_system_id):
+    """
+    Sort and de-duplicate pv systems
+
+    Args:
+        store: store of pv systems
+        pv_system_id: on pv system id
+
+    """
     key = system_id_to_hdf_key(pv_system_id)
     timeseries = store[key]
     timeseries.sort_index(inplace=True)
