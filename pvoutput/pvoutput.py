@@ -349,41 +349,13 @@ class PVOutput:
         pv_system_status = []
         for pv_system_status_text in pv_systems_status_text:
 
-            # get system id
-            system_id = pv_system_status_text.split(";")[0]
-            pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
-
             try:
-                one_pv_system_status = pd.read_csv(
-                    StringIO(pv_system_status_text),
-                    lineterminator=";",
-                    names=["time"] + columns,
-                    dtype={col: np.float64 for col in columns},
-                ).sort_index()
+                one_pv_system_status = process_system_status(pv_system_status_text=pv_system_status_text)
             except Exception as e:
                 _LOG.error(
                     f"Could not change raw text into dataframe. Raw text is {pv_system_status_text}"
                 )
                 raise e
-
-            # process dataframe
-            one_pv_system_status["system_id"] = system_id
-
-            # format date
-            one_pv_system_status["date"] = date
-            one_pv_system_status["date"] = pd.to_datetime(date)
-
-            # format time
-            one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
-                "%H:%M:%S"
-            )
-            one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
-
-            # make datetime
-            one_pv_system_status["datetime"] = (
-                one_pv_system_status["date"] + one_pv_system_status["time"]
-            )
-            one_pv_system_status.drop(columns=["date", "time"], inplace=True)
 
             pv_system_status.append(one_pv_system_status)
 
@@ -1221,6 +1193,54 @@ def check_pv_system_status(pv_system_status: pd.DataFrame, requested_date: date)
                     " Date from index={}, requested_date={}".format(d, requested_date)
                 )
 
+
+def process_system_status(pv_system_status_text):
+    """
+
+    Args:
+        pv_system_status_text:
+
+    Returns:
+    """
+
+
+    # get system id
+    system_id = pv_system_status_text.split(";")[0]
+    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
+
+    # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
+    columns = [
+        "cumulative_energy_gen_Wh",
+        "instantaneous_power_gen_W",
+        "temperature_C",
+        "voltage",
+    ]
+
+    one_pv_system_status = pd.read_csv(
+        StringIO(pv_system_status_text),
+        lineterminator=";",
+        names=["time"] + columns,
+        dtype={col: np.float64 for col in columns},
+    ).sort_index()
+
+    # process dataframe
+    one_pv_system_status["system_id"] = system_id
+
+    # format date
+    one_pv_system_status["date"] = date
+    one_pv_system_status["date"] = pd.to_datetime(date)
+
+    # format time
+    one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
+        "%H:%M:%S"
+    )
+    one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
+
+    # make datetime
+    one_pv_system_status["datetime"] = (
+            one_pv_system_status["date"] + one_pv_system_status["time"]
+    )
+    one_pv_system_status.drop(columns=["date", "time"], inplace=True)
 
 def _process_batch_status(pv_system_status_text):
     # See https://pvoutput.org/help.html#dataservice-getbatchstatus
