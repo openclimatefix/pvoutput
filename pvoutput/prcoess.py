@@ -17,7 +17,6 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     Returns: dataframe of data
     """
 
-
     # get system id
     system_id = int(pv_system_status_text.split(";")[0])
     pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
@@ -42,24 +41,22 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
 
         # this can happen if there is only one data value and it doesnt contain all 5 columns.
         # if there is many rows of data, then it seems fine
-        if pv_system_status_text.count(';') != 0:
+        if pv_system_status_text.count(";") != 0:
             # the data contains more than one row, so lets raise the error
             raise e
 
         # how many columns does it have
-        n_columns = pv_system_status_text.count(',') + 1
+        n_columns = pv_system_status_text.count(",") + 1
 
         one_pv_system_status = pd.read_csv(
             StringIO(pv_system_status_text),
             lineterminator=";",
-            names=["time"] + columns[:n_columns-1],
+            names=["time"] + columns[: n_columns - 1],
             dtype={col: np.float64 for col in columns},
         ).sort_index()
 
         missing_columns = [c for c in columns if c not in one_pv_system_status.columns]
         one_pv_system_status[missing_columns] = np.NAN
-
-
 
     # process dataframe
     one_pv_system_status["system_id"] = system_id
@@ -75,9 +72,7 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
 
     # make datetime
-    one_pv_system_status["datetime"] = (
-            one_pv_system_status["date"] + one_pv_system_status["time"]
-    )
+    one_pv_system_status["datetime"] = one_pv_system_status["date"] + one_pv_system_status["time"]
     one_pv_system_status.drop(columns=["date", "time"], inplace=True)
 
     return one_pv_system_status
