@@ -23,6 +23,7 @@ from pvoutput.consts import (
 )
 from pvoutput.daterange import DateRange, merge_date_ranges_to_years
 from pvoutput.exceptions import NoStatusFound, RateLimitExceeded
+from pvoutput.prcoess import process_batch_status, process_system_status
 from pvoutput.utils import (
     _get_param_from_config_file,
     _get_response,
@@ -338,52 +339,18 @@ class PVOutput:
         # each pv system is on a new line
         pv_systems_status_text = pv_system_status_text.split("\n")
 
-        # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
-        columns = [
-            "cumulative_energy_gen_Wh",
-            "instantaneous_power_gen_W",
-            "temperature_C",
-            "voltage",
-        ]
-
         pv_system_status = []
         for pv_system_status_text in pv_systems_status_text:
 
-            # get system id
-            system_id = pv_system_status_text.split(";")[0]
-            pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
-
             try:
-                one_pv_system_status = pd.read_csv(
-                    StringIO(pv_system_status_text),
-                    lineterminator=";",
-                    names=["time"] + columns,
-                    dtype={col: np.float64 for col in columns},
-                ).sort_index()
+                one_pv_system_status = process_system_status(
+                    pv_system_status_text=pv_system_status_text, date=date
+                )
             except Exception as e:
                 _LOG.error(
                     f"Could not change raw text into dataframe. Raw text is {pv_system_status_text}"
                 )
                 raise e
-
-            # process dataframe
-            one_pv_system_status["system_id"] = system_id
-
-            # format date
-            one_pv_system_status["date"] = date
-            one_pv_system_status["date"] = pd.to_datetime(date)
-
-            # format time
-            one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
-                "%H:%M:%S"
-            )
-            one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
-
-            # make datetime
-            one_pv_system_status["datetime"] = (
-                one_pv_system_status["date"] + one_pv_system_status["time"]
-            )
-            one_pv_system_status.drop(columns=["date", "time"], inplace=True)
 
             pv_system_status.append(one_pv_system_status)
 
@@ -472,7 +439,7 @@ class PVOutput:
         else:
             return
 
-        return _process_batch_status(pv_system_status_text)
+        return process_batch_status(pv_system_status_text)
 
     def get_metadata(self, pv_system_id: int, **kwargs) -> pd.Series:
         """Get metadata for a single PV system.
@@ -1220,43 +1187,6 @@ def check_pv_system_status(pv_system_status: pd.DataFrame, requested_date: date)
                     "A date in the index is outside the expected range."
                     " Date from index={}, requested_date={}".format(d, requested_date)
                 )
-
-
-def _process_batch_status(pv_system_status_text):
-    # See https://pvoutput.org/help.html#dataservice-getbatchstatus
-
-    # PVOutput uses a non-standard format for the data.  The text
-    # needs some processing before it can be read as a CSV.
-    processed_lines = []
-    for line in pv_system_status_text.split("\n"):
-        line_sections = line.split(";")
-        date = line_sections[0]
-        time_and_data = line_sections[1:]
-        processed_line = [
-            "{date},{payload}".format(date=date, payload=payload) for payload in time_and_data
-        ]
-        processed_lines.extend(processed_line)
-
-    if processed_lines:
-        first_line = processed_lines[0]
-        num_cols = len(first_line.split(","))
-        if num_cols >= 8:
-            raise NotImplementedError("Handling of consumption data is not implemented!")
-
-    processed_text = "\n".join(processed_lines)
-    del processed_lines
-
-    columns = ["cumulative_energy_gen_Wh", "instantaneous_power_gen_W", "temperature_C", "voltage"]
-
-    pv_system_status = pd.read_csv(
-        StringIO(processed_text),
-        names=["date", "time"] + columns,
-        parse_dates={"datetime": ["date", "time"]},
-        index_col=["datetime"],
-        dtype={col: np.float64 for col in columns},
-    ).sort_index()
-
-    return pv_system_status
 
 
 def _append_missing_date_range(
