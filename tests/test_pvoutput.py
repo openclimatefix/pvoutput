@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import pvoutput.prcoess
 from pvoutput import pvoutput
 
 
@@ -35,14 +34,6 @@ def test_get_status():
         use_data_service=True,
         timezone="Europe/London",
     )
-
-
-def test_multiple_get_status_process():
-    pv_system_status_text = "1234;07:45,21,255"
-
-    one_status = pvoutput.prcoess.process_system_status(pv_system_status_text=pv_system_status_text)
-
-    assert len(one_status) == 1
 
 
 @pytest.mark.skip("Currently not working in CI")
