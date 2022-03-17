@@ -1,24 +1,26 @@
-from datetime import date
+""" Function to process data """
 from io import StringIO
 
 import numpy as np
 import pandas as pd
 
 
-def process_system_status(pv_system_status_text, date):
+def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     """
+    Process raw system status
 
     Args:
-        pv_system_status_text:
-        date:
+        pv_system_status_text: string of system data, like:
+            "1234;07:45,21,255,1,2;07:50,21,255,1;07:50,21,255,1,2"
+        date: The date this data is from
 
-    Returns:
+    Returns: dataframe of data
     """
 
 
     # get system id
     system_id = int(pv_system_status_text.split(";")[0])
-    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
+    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:]) + ';'
 
     # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
     columns = [
@@ -28,11 +30,13 @@ def process_system_status(pv_system_status_text, date):
         "voltage",
     ]
 
+    print(pv_system_status_text)
     one_pv_system_status = pd.read_csv(
         StringIO(pv_system_status_text),
         lineterminator=";",
         names=["time"] + columns,
         dtype={col: np.float64 for col in columns},
+        verbose=True
     ).sort_index()
 
     # process dataframe
@@ -57,7 +61,16 @@ def process_system_status(pv_system_status_text, date):
     return one_pv_system_status
 
 
-def process_batch_status(pv_system_status_text):
+def process_batch_status(pv_system_status_text) -> pd.DataFrame:
+    """
+    Process batch status text
+
+    Args:
+        pv_system_status_text: text to be procssed
+
+    Returns: dataframe of data
+
+    """
     # See https://pvoutput.org/help.html#dataservice-getbatchstatus
 
     # PVOutput uses a non-standard format for the data.  The text
