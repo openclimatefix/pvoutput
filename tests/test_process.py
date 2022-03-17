@@ -1,6 +1,7 @@
 from datetime import date
 from io import StringIO
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -16,7 +17,11 @@ def test_process_system_status():
 
 
 def test_process_system_status_2():
-    pv_system_status_text = "1234;07:45,21,255,1,2;07:50,21,255,1;07:50,21,255,1,2"
+    # note that the second entry has a missing data value
+    pv_system_status_text = "1234;07:45,21,255,1,5;" \
+                                 "07:50,22,257,2;" \
+                                 "07:55,23,256,3,4"
+
     one_status = process_system_status(
         pv_system_status_text=pv_system_status_text, date=date(2022, 1, 1)
     )
@@ -24,12 +29,24 @@ def test_process_system_status_2():
     assert (one_status["system_id"] == 1234).all()
 
 
-def test_process_system_status_less_columns():
+def test_process_system_status_less_columns_two_data_points():
+    # this has all missing data values
+    pv_system_status_text = "1234;07:45,21,255;" \
+                                 "07:45,22,256"
+    one_status = process_system_status(
+        pv_system_status_text=pv_system_status_text, date=date(2022, 1, 1)
+    )
+    assert len(one_status) == 2
+
+
+def test_process_system_status_less_columns_one_data_points():
+    # this has all missing data values
     pv_system_status_text = "1234;07:45,21,255"
     one_status = process_system_status(
         pv_system_status_text=pv_system_status_text, date=date(2022, 1, 1)
     )
     assert len(one_status) == 1
+    assert np.isnan(one_status['temperature_C'][0])
 
 
 def test_process_batch_status():

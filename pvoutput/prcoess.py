@@ -20,7 +20,7 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
 
     # get system id
     system_id = int(pv_system_status_text.split(";")[0])
-    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:]) + ';'
+    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
 
     # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
     columns = [
@@ -30,14 +30,36 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
         "voltage",
     ]
 
-    print(pv_system_status_text)
-    one_pv_system_status = pd.read_csv(
-        StringIO(pv_system_status_text),
-        lineterminator=";",
-        names=["time"] + columns,
-        dtype={col: np.float64 for col in columns},
-        verbose=True
-    ).sort_index()
+    try:
+        one_pv_system_status = pd.read_csv(
+            StringIO(pv_system_status_text),
+            lineterminator=";",
+            names=["time"] + columns,
+            dtype={col: np.float64 for col in columns},
+        ).sort_index()
+
+    except Exception as e:
+
+        # this can happen if there is only one data value and it doesnt contain all 5 columns.
+        # if there is many rows of data, then it seems fine
+        if pv_system_status_text.count(';') != 0:
+            # the data contains more than one row, so lets raise the error
+            raise e
+
+        # how many columns does it have
+        n_columns = pv_system_status_text.count(',') + 1
+
+        one_pv_system_status = pd.read_csv(
+            StringIO(pv_system_status_text),
+            lineterminator=";",
+            names=["time"] + columns[:n_columns-1],
+            dtype={col: np.float64 for col in columns},
+        ).sort_index()
+
+        missing_columns = [c for c in columns if c not in one_pv_system_status.columns]
+        one_pv_system_status[missing_columns] = np.NAN
+
+
 
     # process dataframe
     one_pv_system_status["system_id"] = system_id
