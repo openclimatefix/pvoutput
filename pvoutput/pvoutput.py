@@ -334,7 +334,7 @@ class PVOutput:
 
         except NoStatusFound:
             _LOG.info(f"system_id {all_pv_system_id}: No status found for date %s", date)
-            pv_system_status_text = ""
+            pv_system_status_text = "no status found"
 
         # each pv system is on a new line
         pv_systems_status_text = pv_system_status_text.split("\n")
