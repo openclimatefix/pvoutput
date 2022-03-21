@@ -27,6 +27,14 @@ def test_process_system_status_2():
     assert (one_status["system_id"] == 1234).all()
 
 
+def test_process_system_status_none():
+
+    one_status = process_system_status(
+        pv_system_status_text="no status found", date=date(2022, 1, 1)
+    )
+    assert len(one_status) == 0
+
+
 def test_process_system_status_less_columns_two_data_points():
     # this has all missing data values
     pv_system_status_text = "1234;07:45,21,255;" "07:45,22,256"
