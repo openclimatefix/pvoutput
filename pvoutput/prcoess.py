@@ -4,6 +4,10 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     """
@@ -17,10 +21,6 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     Returns: dataframe of data
     """
 
-    # get system id
-    system_id = int(pv_system_status_text.split(";")[0])
-    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
-
     # See https://pvoutput.org/help/data_services.html#data-services-get-system-status
     columns = [
         "cumulative_energy_gen_Wh",
@@ -28,6 +28,13 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
         "temperature_C",
         "voltage",
     ]
+    if pv_system_status_text == 'no status found':
+        logger.debug('Text was empty so return empty dataframe')
+        return pd.DataFrame(columns=columns + ['system_id', 'datetime'])
+
+    # get system id
+    system_id = int(pv_system_status_text.split(";")[0])
+    pv_system_status_text = ";".join(pv_system_status_text.split(";")[1:])
 
     try:
         one_pv_system_status = pd.read_csv(
