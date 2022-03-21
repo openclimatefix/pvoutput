@@ -27,9 +27,9 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
         "temperature_C",
         "voltage",
     ]
-    if pv_system_status_text == 'no status found':
-        logger.debug('Text was empty so return empty dataframe')
-        return pd.DataFrame(columns=columns + ['system_id', 'datetime'])
+    if pv_system_status_text == "no status found":
+        logger.debug("Text was empty so return empty dataframe")
+        return pd.DataFrame(columns=columns + ["system_id", "datetime"])
 
     # get system id
     system_id = int(pv_system_status_text.split(";")[0])
