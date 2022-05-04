@@ -292,6 +292,7 @@ def _convert_energy_to_numeric_watt_hours(series: pd.Series) -> pd.Series:
     for unit, multiplier in [("kWh", 1e3), ("MWh", 1e6)]:
         selection = series[series.str.contains(unit)]
         selection = selection.str.replace(unit, "")
+        selection = selection.str.replace(",", "")
         selection = pd.to_numeric(selection)
         selection *= multiplier
         data.append(selection)
@@ -376,7 +377,7 @@ def get_regions_for_country(country_code: int):
     region_tags = soup.find_all("a", href=re.compile(r"map\.jsp\?country="))
     for row in region_tags:
         href = row.attrs["href"]
-        p = re.compile(r"^map\.jsp\?country=243&region=(\w+.*)$")
+        p = re.compile(r"^map\.jsp\?country=" + str(country_code) + r"&region=(\w+.*)$")
         href_match = p.match(href)
         region = href_match.group(1)
         region_list.append(region)
