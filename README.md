@@ -1,5 +1,5 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![codecov](https://codecov.io/gh/openclimatefix/pvoutput/branch/main/graph/badge.svg?token=GTQDR2ZZ2S)](https://codecov.io/gh/openclimatefix/pvoutput)
@@ -79,6 +79,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/peterdudfield"><img src="https://avatars.githubusercontent.com/u/34686298?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Peter Dudfield</b></sub></a><br /><a href="#infra-peterdudfield" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
     <td align="center"><a href="https://github.com/vnshanmukh"><img src="https://avatars.githubusercontent.com/u/67438038?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Shanmukh Chava</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=vnshanmukh" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/Antsthebul"><img src="https://avatars.githubusercontent.com/u/56587872?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Antsthebul</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=Antsthebul" title="Code">💻</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="http://www.rachitsingh.com"><img src="https://avatars.githubusercontent.com/u/1606892?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Rachit Singh</b></sub></a><br /><a href="#data-rachtsingh" title="Data">🔣</a> <a href="https://github.com/openclimatefix/pvoutput/commits?author=rachtsingh" title="Code">💻</a></td>
   </tr>
 </table>
 
