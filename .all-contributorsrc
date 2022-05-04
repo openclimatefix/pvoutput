@@ -67,6 +67,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "rachtsingh",
+      "name": "Rachit Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1606892?v=4",
+      "profile": "http://www.rachitsingh.com",
+      "contributions": [
+        "data",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
