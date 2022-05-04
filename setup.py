@@ -8,7 +8,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="pvoutput-ocf",
-    version="0.1.18",
+    version="0.1.19",
     license="MIT",
     packages=find_packages(),
     install_requires=install_requires,
