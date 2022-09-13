@@ -51,8 +51,8 @@ class PVOutput:
 
     def __init__(
         self,
-        api_key: str = os.getenv("API_KEY"),
-        system_id: str = os.getenv("SYSTEM_ID"),
+        api_key: str = None,
+        system_id: str = None,
         config_filename: Optional[str] = CONFIG_FILENAME,
         data_service_url: Optional[str] = os.getenv("DATA_SERVICE_URL"),
     ):
@@ -1119,9 +1119,10 @@ class PVOutput:
         retry_time_utc = utc_now + timedelta_to_wait
 
         # good to have the retry time in local so that user see 'their' time
-        retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
+        #retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
+        retry_time_local = retry_time_utc
         _print_and_log(
-            "Waiting {:.0f} seconds.  Will retry at {}".format(secs_to_wait, retry_time_local)
+            "Waiting {:.0f} seconds.  Will retry at {} UTC".format(secs_to_wait, retry_time_local)
         )
         if do_sleeping:
             time.sleep(secs_to_wait)
