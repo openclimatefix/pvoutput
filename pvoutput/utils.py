@@ -160,7 +160,8 @@ def get_missing_dates_for_id(store_filename: str, system_id: int) -> List:
                 where="index=system_id",
                 columns=["missing_start_date_PV_localtime", "missing_end_date_PV_localtime"],
             )
-        except:
+        except Exception as e:
+            _LOG.debug(e)
             return []
 
     missing_dates = []

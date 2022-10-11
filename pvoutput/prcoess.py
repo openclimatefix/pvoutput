@@ -5,8 +5,6 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 
-from typing import Optional
-
 logger = logging.getLogger(__name__)
 
 
