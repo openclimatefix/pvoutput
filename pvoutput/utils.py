@@ -154,11 +154,14 @@ def get_missing_dates_for_id(store_filename: str, system_id: int) -> List:
         return []
 
     with pd.HDFStore(store_filename, mode="r") as store:
-        missing_dates_for_id = store.select(
-            key="missing_dates",
-            where="index=system_id",
-            columns=["missing_start_date_PV_localtime", "missing_end_date_PV_localtime"],
-        )
+        try:
+            missing_dates_for_id = store.select(
+                key="missing_dates",
+                where="index=system_id",
+                columns=["missing_start_date_PV_localtime", "missing_end_date_PV_localtime"],
+            )
+        except:
+            return []
 
     missing_dates = []
     for _, row in missing_dates_for_id.iterrows():

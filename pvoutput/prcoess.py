@@ -5,6 +5,8 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 
+from typing import Optional
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,18 +70,32 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     one_pv_system_status["system_id"] = system_id
 
     # format date
-    one_pv_system_status["date"] = date
     one_pv_system_status["date"] = pd.to_datetime(date)
+    one_pv_system_status = join_date_time(one_pv_system_status)
+
+    return one_pv_system_status
+
+
+def join_date_time(one_pv_system_status, time_format="%H:%M:%S", date_format: Optional[str] = None):
+
+    # fix midnight
+    fix_midnight_index = one_pv_system_status["time"] == "24:00"
+    one_pv_system_status.loc[fix_midnight_index,"time"] = "00:00"
 
     # format time
     one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
-        "%H:%M:%S"
+        time_format
     )
     one_pv_system_status["time"] = pd.to_timedelta(one_pv_system_status["time"])
+
+    # format date
+    one_pv_system_status["date"] = pd.to_datetime(one_pv_system_status["date"].astype(str))
 
     # make datetime
     one_pv_system_status["datetime"] = one_pv_system_status["date"] + one_pv_system_status["time"]
     one_pv_system_status.drop(columns=["date", "time"], inplace=True)
+
+    one_pv_system_status.set_index('datetime', inplace=True, drop=True)
 
     return one_pv_system_status
 
@@ -122,9 +138,13 @@ def process_batch_status(pv_system_status_text) -> pd.DataFrame:
     pv_system_status = pd.read_csv(
         StringIO(processed_text),
         names=["date", "time"] + columns,
-        parse_dates={"datetime": ["date", "time"]},
-        index_col=["datetime"],
+        # parse_dates={"datetime": ["date", "time"]},
+        # index_col=["datetime"],
         dtype={col: np.float64 for col in columns},
     ).sort_index()
+
+    pv_system_status = join_date_time(pv_system_status,date_format='%Y%m%d')
+
+    logger.info(pv_system_status)
 
     return pv_system_status
