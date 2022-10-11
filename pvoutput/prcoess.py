@@ -76,11 +76,20 @@ def process_system_status(pv_system_status_text, date) -> pd.DataFrame:
     return one_pv_system_status
 
 
-def join_date_time(one_pv_system_status, time_format="%H:%M:%S", date_format: Optional[str] = None):
+def join_date_time(one_pv_system_status: pd.DataFrame, time_format="%H:%M:%S"):
+    """
+    Join date and time columns toegther
+
+    Args:
+        one_pv_system_status: dataframe with 'date' and 'time'
+        time_format: format of time
+
+    Returns: dataframe with column datetime
+    """
 
     # fix midnight
     fix_midnight_index = one_pv_system_status["time"] == "24:00"
-    one_pv_system_status.loc[fix_midnight_index,"time"] = "00:00"
+    one_pv_system_status.loc[fix_midnight_index, "time"] = "00:00"
 
     # format time
     one_pv_system_status["time"] = pd.to_datetime(one_pv_system_status["time"]).dt.strftime(
@@ -94,8 +103,9 @@ def join_date_time(one_pv_system_status, time_format="%H:%M:%S", date_format: Op
     # make datetime
     one_pv_system_status["datetime"] = one_pv_system_status["date"] + one_pv_system_status["time"]
     one_pv_system_status.drop(columns=["date", "time"], inplace=True)
+    one_pv_system_status.sort_values(by="datetime", inplace=True)
 
-    one_pv_system_status.set_index('datetime', inplace=True, drop=True)
+    one_pv_system_status.set_index("datetime", inplace=True, drop=True)
 
     return one_pv_system_status
 
@@ -143,7 +153,7 @@ def process_batch_status(pv_system_status_text) -> pd.DataFrame:
         dtype={col: np.float64 for col in columns},
     ).sort_index()
 
-    pv_system_status = join_date_time(pv_system_status,date_format='%Y%m%d')
+    pv_system_status = join_date_time(pv_system_status)
 
     logger.info(pv_system_status)
 
