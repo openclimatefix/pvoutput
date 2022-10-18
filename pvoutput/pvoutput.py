@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import requests
 import tables
-from dateutil.tz import tzlocal
 
 from pvoutput.consts import (
     BASE_URL,
@@ -428,8 +427,8 @@ class PVOutput:
                 if retry == 0:
                     _print_and_log("Request accepted.")
                 if retry < max_retries - 1:
-                    _print_and_log("Sleeping for 1 minute.")
-                    time.sleep(60)
+                    _print_and_log("Sleeping for 1 second.")
+                    time.sleep(1)
                 else:
                     _print_and_log(
                         "Call get_batch_status again in a minute to see if" " results are ready."
@@ -925,6 +924,7 @@ class PVOutput:
                     )
             else:
                 total_rows += len(timeseries)
+                _LOG.info(f'Adding timezone {timezone} to {total_rows} rows')
                 timeseries = timeseries.tz_localize(timezone)
                 _LOG.info(
                     "system_id: %d: %d rows retrieved: %s to %s",
@@ -1119,7 +1119,7 @@ class PVOutput:
         retry_time_utc = utc_now + timedelta_to_wait
 
         # good to have the retry time in local so that user see 'their' time
-        #retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
+        # retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
         retry_time_local = retry_time_utc
         _print_and_log(
             "Waiting {:.0f} seconds.  Will retry at {} UTC".format(secs_to_wait, retry_time_local)
