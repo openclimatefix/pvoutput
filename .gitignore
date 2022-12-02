@@ -80,6 +80,9 @@ target/
 profile_default/
 ipython_config.py
 
+# JetBrains
+.idea
+
 # pyenv
 .python-version
 
