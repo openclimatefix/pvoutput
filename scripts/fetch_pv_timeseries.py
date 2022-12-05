@@ -28,6 +28,7 @@ import datetime as dt
 import sys
 import pandas as pd
 import pathlib
+import logging
 
 
 @cl.command()
@@ -79,6 +80,7 @@ def run(
 
     # Write output file
     filename: str = pathlib.Path(systemfile_path).stem.replace("systems", "timeseries") + ".hdf"
+    logging.info(f"Writing to {output_directory}/{filename}")
     pv.download_multiple_systems_to_disk(
         system_ids=pv_systems.index,
         start_date=start_date,
