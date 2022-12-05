@@ -56,8 +56,7 @@ For example: `data_service_url: https://pvoutput.org/`
 
 ## Install pvoutput Python library
 
-`pip install -e git+https://github.com/openclimatefix/pvoutput#egg=pvoutput`
-
+`pip install -e git+https://github.com/openclimatefix/pvoutput.git@main#egg=pvoutput-ocf
 
 # Usage
 
