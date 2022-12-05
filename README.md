@@ -10,6 +10,10 @@ This code is a work-in-progress.  The aim is to provide both a Python library fo
 
 # Installation
 
+```bash
+$ pip install pvoutput-ocf
+```
+
 ## Register with PVOutput.org
 
 You need to get an API key *and* a system ID from PVOutput.org.
