@@ -1,5 +1,5 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![codecov](https://codecov.io/gh/openclimatefix/pvoutput/branch/main/graph/badge.svg?token=GTQDR2ZZ2S)](https://codecov.io/gh/openclimatefix/pvoutput)
@@ -70,18 +70,21 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
-  <tr>
-    <td align="center"><a href="http://jack-kelly.com"><img src="https://avatars.githubusercontent.com/u/460756?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jack Kelly</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=JackKelly" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/ssmssam"><img src="https://avatars.githubusercontent.com/u/39378848?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sam Murphy-Sugrue</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=ssmssam" title="Code">💻</a></td>
-    <td align="center"><a href="https://gabrieltseng.github.io/"><img src="https://avatars.githubusercontent.com/u/29063740?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Gabriel Tseng</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=gabrieltseng" title="Code">💻</a></td>
-    <td align="center"><a href="http://www.solar.sheffield.ac.uk/"><img src="https://avatars.githubusercontent.com/u/12187350?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jamie Taylor</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=JamieTaylor-TUOS" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/peterdudfield"><img src="https://avatars.githubusercontent.com/u/34686298?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Peter Dudfield</b></sub></a><br /><a href="#infra-peterdudfield" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-    <td align="center"><a href="https://github.com/vnshanmukh"><img src="https://avatars.githubusercontent.com/u/67438038?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Shanmukh Chava</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=vnshanmukh" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/Antsthebul"><img src="https://avatars.githubusercontent.com/u/56587872?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Antsthebul</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=Antsthebul" title="Code">💻</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="http://www.rachitsingh.com"><img src="https://avatars.githubusercontent.com/u/1606892?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Rachit Singh</b></sub></a><br /><a href="#data-rachtsingh" title="Data">🔣</a> <a href="https://github.com/openclimatefix/pvoutput/commits?author=rachtsingh" title="Code">💻</a></td>
-  </tr>
+  <tbody>
+    <tr>
+      <td align="center"><a href="http://jack-kelly.com"><img src="https://avatars.githubusercontent.com/u/460756?v=4?s=100" width="100px;" alt="Jack Kelly"/><br /><sub><b>Jack Kelly</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=JackKelly" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/ssmssam"><img src="https://avatars.githubusercontent.com/u/39378848?v=4?s=100" width="100px;" alt="Sam Murphy-Sugrue"/><br /><sub><b>Sam Murphy-Sugrue</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=ssmssam" title="Code">💻</a></td>
+      <td align="center"><a href="https://gabrieltseng.github.io/"><img src="https://avatars.githubusercontent.com/u/29063740?v=4?s=100" width="100px;" alt="Gabriel Tseng"/><br /><sub><b>Gabriel Tseng</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=gabrieltseng" title="Code">💻</a></td>
+      <td align="center"><a href="http://www.solar.sheffield.ac.uk/"><img src="https://avatars.githubusercontent.com/u/12187350?v=4?s=100" width="100px;" alt="Jamie Taylor"/><br /><sub><b>Jamie Taylor</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=JamieTaylor-TUOS" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/peterdudfield"><img src="https://avatars.githubusercontent.com/u/34686298?v=4?s=100" width="100px;" alt="Peter Dudfield"/><br /><sub><b>Peter Dudfield</b></sub></a><br /><a href="#infra-peterdudfield" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center"><a href="https://github.com/vnshanmukh"><img src="https://avatars.githubusercontent.com/u/67438038?v=4?s=100" width="100px;" alt="Shanmukh Chava"/><br /><sub><b>Shanmukh Chava</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=vnshanmukh" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/Antsthebul"><img src="https://avatars.githubusercontent.com/u/56587872?v=4?s=100" width="100px;" alt="Antsthebul"/><br /><sub><b>Antsthebul</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=Antsthebul" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center"><a href="http://www.rachitsingh.com"><img src="https://avatars.githubusercontent.com/u/1606892?v=4?s=100" width="100px;" alt="Rachit Singh"/><br /><sub><b>Rachit Singh</b></sub></a><br /><a href="#data-rachtsingh" title="Data">🔣</a> <a href="https://github.com/openclimatefix/pvoutput/commits?author=rachtsingh" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/devsjc"><img src="https://avatars.githubusercontent.com/u/47188100?v=4?s=100" width="100px;" alt="devsjc"/><br /><sub><b>devsjc</b></sub></a><br /><a href="https://github.com/openclimatefix/pvoutput/commits?author=devsjc" title="Code">💻</a></td>
+    </tr>
+  </tbody>
 </table>
 
 <!-- markdownlint-restore -->
