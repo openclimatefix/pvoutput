@@ -70,9 +70,9 @@ class PVOutput:
         """
         self.api_key = api_key
         self.system_id = system_id
-        self.rate_limit_remaining = None
-        self.rate_limit_total = None
-        self.rate_limit_reset_time = None
+        self.rate_limit_remaining = 600
+        self.rate_limit_total = 600
+        self.rate_limit_reset_time = 600
         self.data_service_url = data_service_url
 
         # Set from config file if None
@@ -1007,12 +1007,12 @@ class PVOutput:
         self._check_api_params()
         # Create request headers
         headers = {
-            "X-Rate-Limit": "1",
+            "X-Rate-Limit": "5",
             "X-Pvoutput-Apikey": self.api_key,
             "X-Pvoutput-SystemId": self.system_id,
         }
 
-        api_url = urljoin(BASE_URL, "service/r2/{}.jsp".format(service))
+        api_url = urljoin(BASE_URL, "/data/r2/{}.jsp".format(service))
 
         return _get_response(api_url, api_params, headers)
 
@@ -1033,7 +1033,7 @@ class PVOutput:
         api_params["key"] = self.api_key
         api_params["sid"] = self.system_id
 
-        api_url = urljoin(self.data_service_url, "data/r2/{}.jsp".format(service))
+        api_url = urljoin(self.data_service_url, "/data/r2/{}.jsp".format(service))
 
         return _get_response(api_url, api_params, headers)
 
@@ -1049,7 +1049,8 @@ class PVOutput:
             setattr(self, param_name, header_value)
 
         self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(self.rate_limit_reset_time)
-        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
+        print("change is happening")
+        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
 
         _LOG.debug("%s", self.rate_limit_info())
 
