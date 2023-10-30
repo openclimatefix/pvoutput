@@ -161,9 +161,7 @@ class PVOutput:
         if lat is not None and lon is not None:
             api_params["ll"] = "{:f},{:f}".format(lat, lon)
 
-        pv_systems_text = self._api_query(
-            service="search", api_params=api_params, **kwargs
-        )
+        pv_systems_text = self._api_query(service="search", api_params=api_params, **kwargs)
 
         pv_systems = pd.read_csv(
             StringIO(pv_systems_text),
@@ -316,9 +314,7 @@ class PVOutput:
                     temperature_C,
                     voltage,
         """
-        _LOG.info(
-            f"system_ids {pv_system_ids}: Requesting batch system status for %s", date
-        )
+        _LOG.info(f"system_ids {pv_system_ids}: Requesting batch system status for %s", date)
         date = date_to_pvoutput_str(date)
         _check_date(date)
 
@@ -336,9 +332,7 @@ class PVOutput:
             )
 
         except NoStatusFound:
-            _LOG.info(
-                f"system_id {all_pv_system_id}: No status found for date %s", date
-            )
+            _LOG.info(f"system_id {all_pv_system_id}: No status found for date %s", date)
             pv_system_status_text = "no status found"
 
         # each pv system is on a new line
@@ -443,8 +437,7 @@ class PVOutput:
                     time.sleep(1)
                 else:
                     _print_and_log(
-                        "Call get_batch_status again in a minute to see if"
-                        " results are ready."
+                        "Call get_batch_status again in a minute to see if" " results are ready."
                     )
             else:
                 break
@@ -571,12 +564,8 @@ class PVOutput:
             **kwargs,
         )
 
-        _LOG.debug(
-            f"getting metadata for {country_code} for {start_id_range} to {end_id_range}"
-        )
-        print(
-            f"getting metadata for {country_code} for {start_id_range} to {end_id_range}"
-        )
+        _LOG.debug(f"getting metadata for {country_code} for {start_id_range} to {end_id_range}")
+        print(f"getting metadata for {country_code} for {start_id_range} to {end_id_range}")
 
         pv_metadata_for_country = pd.read_csv(
             StringIO(pv_metadata_text),
@@ -688,12 +677,8 @@ class PVOutput:
         else:
             pv_metadata.index = [pv_system_id]
 
-        pv_metadata["query_date_from"] = (
-            pd.Timestamp(date_from) if date_from else pd.NaT
-        )
-        pv_metadata["query_date_to"] = (
-            pd.Timestamp(date_to) if date_to else pd.Timestamp.now()
-        )
+        pv_metadata["query_date_from"] = pd.Timestamp(date_from) if date_from else pd.NaT
+        pv_metadata["query_date_to"] = pd.Timestamp(date_to) if date_to else pd.Timestamp.now()
         return pv_metadata
 
     def _get_statistic_with_cache(
@@ -740,9 +725,7 @@ class PVOutput:
             return stats
 
         try:
-            stats = pd.read_hdf(
-                store_filename, key="statistics", where="index=pv_system_id"
-            )
+            stats = pd.read_hdf(store_filename, key="statistics", where="index=pv_system_id")
         except (FileNotFoundError, KeyError):
             return _get_fresh_statistic()
 
@@ -808,9 +791,7 @@ class PVOutput:
         n = len(system_ids)
         for i, pv_system_id in enumerate(system_ids):
             _LOG.info("**********************")
-            msg = "system_id {:d}: {:d} of {:d} ({:%})".format(
-                pv_system_id, i + 1, n, (i + 1) / n
-            )
+            msg = "system_id {:d}: {:d} of {:d} ({:%})".format(pv_system_id, i + 1, n, (i + 1) / n)
             _LOG.info(msg)
             print("\r", msg, end="", flush=True)
 
@@ -944,13 +925,9 @@ class PVOutput:
             _LOG.info("system_id %d: Stats say there is no data!", system_id)
             return []
 
-        timeseries_date_range = DateRange(
-            stats["actual_date_from"], stats["actual_date_to"]
-        )
+        timeseries_date_range = DateRange(stats["actual_date_from"], stats["actual_date_to"])
 
-        data_availability = stats["num_outputs"] / (
-            timeseries_date_range.total_days() + 1
-        )
+        data_availability = stats["num_outputs"] / (timeseries_date_range.total_days() + 1)
 
         if data_availability < min_data_availability:
             _LOG.info(
@@ -1091,9 +1068,7 @@ class PVOutput:
             RateLimitExceeded
         """
         get_response_func = (
-            self._get_data_service_response
-            if use_data_service
-            else self._get_api_response
+            self._get_data_service_response if use_data_service else self._get_api_response
         )
 
         try:
@@ -1105,16 +1080,13 @@ class PVOutput:
         try:
             return self._process_api_response(response)
         except RateLimitExceeded:
-            msg = (
-                "PVOutput.org API rate limit exceeded!"
-                "  Rate limit will be reset at {}".format(self.rate_limit_reset_time)
+            msg = "PVOutput.org API rate limit exceeded!" "  Rate limit will be reset at {}".format(
+                self.rate_limit_reset_time
             )
             _print_and_log(msg)
             if wait_if_rate_limit_exceeded:
                 self.wait_for_rate_limit_reset()
-                return self._api_query(
-                    service, api_params, wait_if_rate_limit_exceeded=False
-                )
+                return self._api_query(service, api_params, wait_if_rate_limit_exceeded=False)
 
             raise RateLimitExceeded(response, msg)
 
@@ -1138,9 +1110,7 @@ class PVOutput:
 
         return _get_response(api_url, api_params, headers)
 
-    def _get_data_service_response(
-        self, service: str, api_params: Dict
-    ) -> requests.Response:
+    def _get_data_service_response(self, service: str, api_params: Dict) -> requests.Response:
         """
         Get the data service response from pvoutput.org
 
@@ -1172,9 +1142,7 @@ class PVOutput:
             header_value = int(headers[header_key])
             setattr(self, param_name, header_value)
 
-        self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(
-            self.rate_limit_reset_time
-        )
+        self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(self.rate_limit_reset_time)
         self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
 
         _LOG.debug("%s", self.rate_limit_info())
@@ -1248,9 +1216,7 @@ class PVOutput:
         # retry_time_local = retry_time_utc.tz_convert(tz=datetime.now(tzlocal()).tzname())
         retry_time_local = retry_time_utc
         _print_and_log(
-            "Waiting {:.0f} seconds.  Will retry at {} UTC".format(
-                secs_to_wait, retry_time_local
-            )
+            "Waiting {:.0f} seconds.  Will retry at {} UTC".format(secs_to_wait, retry_time_local)
         )
         if do_sleeping:
             time.sleep(secs_to_wait)
@@ -1339,25 +1305,14 @@ def _append_missing_date_range(
         missing_end_date,
     )
     with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
-        store.append(
-            key="missing_dates", value=new_missing_date_range, data_columns=True
-        )
+        store.append(key="missing_dates", value=new_missing_date_range, data_columns=True)
 
 
-def _record_gaps(
-    output_filename, pv_system_id, date_to, timeseries, datetime_of_api_request
-):
+def _record_gaps(output_filename, pv_system_id, date_to, timeseries, datetime_of_api_request):
     dates_of_data = (
-        timeseries["instantaneous_power_gen_W"]
-        .dropna()
-        .resample("D")
-        .mean()
-        .dropna()
-        .index.date
+        timeseries["instantaneous_power_gen_W"].dropna().resample("D").mean().dropna().index.date
     )
-    dates_requested = pd.date_range(
-        date_to - timedelta(days=365), date_to, freq="D"
-    ).date
+    dates_requested = pd.date_range(date_to - timedelta(days=365), date_to, freq="D").date
     missing_dates = set(dates_requested) - set(dates_of_data)
     missing_date_ranges = _convert_consecutive_dates_to_date_ranges(list(missing_dates))
     _LOG.info(
