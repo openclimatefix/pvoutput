@@ -543,10 +543,10 @@ class PVOutput:
         Returns:
             pd.Dataframe.  Index is:
                 system_id,
-                system_DC_capacity_W,
+                system_size_W,
                 postcode,
                 num_panels,
-                panel_capacity_W_each,
+                panel_power_W,
                 num_inverters,
                 inverter_capacity_W,
                 orientation,
@@ -575,18 +575,18 @@ class PVOutput:
             f"getting metadata for {country_code} for {start_id_range} to {end_id_range}"
         )
         print(
-            f"getting metadata for {country_code} for {start_id_range} to {end_id_range}"
+            f"Getting metadata for country code: {country_code} for {start_id_range} to {end_id_range}"
         )
 
         pv_metadata_for_country = pd.read_csv(
             StringIO(pv_metadata_text),
-            lineterminator=";",
+            lineterminator="\n",
             names=[
                 "system_id",
-                "system_DC_capacity_W",
+                "system_size_W",
                 "postcode",
                 "num_panels",
-                "panel_capacity_W_each",
+                "panel_power_W",
                 "num_inverters",
                 "inverter_capacity_W",
                 "orientation",
@@ -602,11 +602,7 @@ class PVOutput:
                 "secondary_array_tilt_degrees",
             ],
             parse_dates=["install_date"],
-            nrows=1,
         )
-        pv_metadata_for_country["system_id"] = pv_metadata_for_country["system_id"]
-        # pv_metadata_for_country["system_id"] = [start_id_range, end_id_range]
-        # pv_metadata_for_country.name = [start_id_range, end_id_range]
         return pv_metadata_for_country
 
     def get_statistic(
@@ -933,39 +929,39 @@ class PVOutput:
         if not date_ranges:
             return date_ranges
 
-        stats = self._get_statistic_with_cache(
-            store_filename,
-            system_id,
-            date_to=date_ranges[-1].end_date,
-            wait_if_rate_limit_exceeded=True,
-        ).squeeze()
+        # stats = self._get_statistic_with_cache(
+        #     store_filename,
+        #     system_id,
+        #     date_to=date_ranges[-1].end_date,
+        #     wait_if_rate_limit_exceeded=True,
+        # ).squeeze()
 
-        if pd.isnull(stats["actual_date_from"]) or pd.isnull(stats["actual_date_to"]):
-            _LOG.info("system_id %d: Stats say there is no data!", system_id)
-            return []
+        # if pd.isnull(stats["actual_date_from"]) or pd.isnull(stats["actual_date_to"]):
+        #     _LOG.info("system_id %d: Stats say there is no data!", system_id)
+        #     return []
 
-        timeseries_date_range = DateRange(
-            stats["actual_date_from"], stats["actual_date_to"]
-        )
+        # timeseries_date_range = DateRange(
+        #     stats["actual_date_from"], stats["actual_date_to"]
+        # )
 
-        data_availability = stats["num_outputs"] / (
-            timeseries_date_range.total_days() + 1
-        )
+        # data_availability = stats["num_outputs"] / (
+        #     timeseries_date_range.total_days() + 1
+        # )
 
-        if data_availability < min_data_availability:
-            _LOG.info(
-                "system_id %d: Data availability too low!  Only %.0f %%.",
-                system_id,
-                data_availability * 100,
-            )
-            return []
+        # if data_availability < min_data_availability:
+        #     _LOG.info(
+        #         "system_id %d: Data availability too low!  Only %.0f %%.",
+        #         system_id,
+        #         data_availability * 100,
+        #     )
+        #     return []
 
-        new_date_ranges = []
-        for date_range in date_ranges:
-            new_date_range = date_range.intersection(timeseries_date_range)
-            if new_date_range:
-                new_date_ranges.append(new_date_range)
-        return new_date_ranges
+        # new_date_ranges = []
+        # for date_range in date_ranges:
+        #     new_date_range = date_range.intersection(timeseries_date_range)
+        #     if new_date_range:
+        #         new_date_ranges.append(new_date_range)
+        # return new_date_ranges
 
     def _download_multiple_using_get_batch_status(
         self,
@@ -1063,6 +1059,7 @@ class PVOutput:
                 timeseries["datetime_of_API_request"] = datetime_of_api_request
                 timeseries["query_date"] = pd.Timestamp(date_to_load)
                 key = system_id_to_hdf_key(pv_system_id)
+                print(key)
                 with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", tables.NaturalNameWarning)
@@ -1175,7 +1172,10 @@ class PVOutput:
         self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(
             self.rate_limit_reset_time
         )
-        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
+        if self.rate_limit_reset_time.tzinfo is None:
+            self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
+        else:
+            self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
 
         _LOG.debug("%s", self.rate_limit_info())
 
