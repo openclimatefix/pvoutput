@@ -26,6 +26,7 @@ from pvoutput import *
 import click as cl
 import datetime as dt
 import sys
+import os
 import pandas as pd
 import pathlib
 import logging
@@ -36,7 +37,8 @@ import logging
     "-s",
     "--systemfile",
     "systemfile_path",
-    envvar="SYSTEMFILE",
+    envvar=os.environ.get("SYSTEM_FILE"),
+    default='./examples/pv_data/PVOutput_India_systems.csv',
     required=True,
     type=cl.Path(exists=True),
 )
@@ -44,8 +46,8 @@ import logging
     "-o",
     "--outdir",
     "output_directory",
-    envvar="OUTDIR",
-    default="/mnt/storage_b/data/ocf/solar_pv_nowcasting/nowcasting_dataset_pipeline/PV/PVOutput.org",
+    envvar=os.environ.get("OUTDIR"),
+    default="./examples/pv_data",
     type=cl.Path(exists=False, dir_okay=True),
 )
 @cl.option(
@@ -53,8 +55,8 @@ import logging
 )
 @cl.option("--enddate", "end_date", envvar="ENDDATE", default="2019-08-20", type=cl.DateTime())
 @cl.option("--data_service_url", envvar="DATA_SERVICE_URL")
-@cl.option("--pvo_systemid", envvar="PVOUTPUT_AUTH_SYSTEMID", required=True, type=str)
-@cl.option("--pvo_apikey", envvar="PVOUTPUT_AUTH_APIKEY", required=True, type=str)
+@cl.option("--pvo_systemid", envvar="PVOUTPUT_AUTH_SYSTEMID", default="68732", required=True, type=str)
+@cl.option("--pvo_apikey", envvar="PVOUTPUT_AUTH_APIKEY", default="3f784ff6cfa27c44436f88da0c429b410687ad14",required=True, type=str)
 def run(
     output_directory: str,
     systemfile_path: str,
@@ -79,7 +81,7 @@ def run(
     pv_systems: pd.DataFrame = pd.read_csv(systemfile_path, index_col="system_id")
 
     # Write output file
-    filename: str = pathlib.Path(systemfile_path).stem.replace("systems", "timeseries") + ".hdf"
+    filename: str = pathlib.Path(systemfile_path).stem.replace("systems", "timeseries") + ".hdf5"
     logging.info(f"Writing to {output_directory}/{filename}")
     pv.download_multiple_systems_to_disk(
         system_ids=pv_systems.index,
