@@ -816,13 +816,13 @@ class PVOutput:
                 output_filename, pv_system_id, start_date, end_date
             )
 
-            # How much data is actually available?
-            date_ranges_to_download = self._filter_date_range(
-                output_filename,
-                pv_system_id,
-                date_ranges_to_download,
-                min_data_availability,
-            )
+            # # How much data is actually available?
+            # date_ranges_to_download = self._filter_date_range(
+            #     output_filename,
+            #     pv_system_id,
+            #     date_ranges_to_download,
+            #     min_data_availability,
+            # )
 
             if not date_ranges_to_download:
                 _LOG.info("system_id %d: No data left to download :)", pv_system_id)
@@ -929,39 +929,39 @@ class PVOutput:
         if not date_ranges:
             return date_ranges
 
-        # stats = self._get_statistic_with_cache(
-        #     store_filename,
-        #     system_id,
-        #     date_to=date_ranges[-1].end_date,
-        #     wait_if_rate_limit_exceeded=True,
-        # ).squeeze()
+        stats = self._get_statistic_with_cache(
+            store_filename,
+            system_id,
+            date_to=date_ranges[-1].end_date,
+            wait_if_rate_limit_exceeded=True,
+        ).squeeze()
 
-        # if pd.isnull(stats["actual_date_from"]) or pd.isnull(stats["actual_date_to"]):
-        #     _LOG.info("system_id %d: Stats say there is no data!", system_id)
-        #     return []
+        if pd.isnull(stats["actual_date_from"]) or pd.isnull(stats["actual_date_to"]):
+            _LOG.info("system_id %d: Stats say there is no data!", system_id)
+            return []
 
-        # timeseries_date_range = DateRange(
-        #     stats["actual_date_from"], stats["actual_date_to"]
-        # )
+        timeseries_date_range = DateRange(
+            stats["actual_date_from"], stats["actual_date_to"]
+        )
 
-        # data_availability = stats["num_outputs"] / (
-        #     timeseries_date_range.total_days() + 1
-        # )
+        data_availability = stats["num_outputs"] / (
+            timeseries_date_range.total_days() + 1
+        )
 
-        # if data_availability < min_data_availability:
-        #     _LOG.info(
-        #         "system_id %d: Data availability too low!  Only %.0f %%.",
-        #         system_id,
-        #         data_availability * 100,
-        #     )
-        #     return []
+        if data_availability < min_data_availability:
+            _LOG.info(
+                "system_id %d: Data availability too low!  Only %.0f %%.",
+                system_id,
+                data_availability * 100,
+            )
+            return []
 
-        # new_date_ranges = []
-        # for date_range in date_ranges:
-        #     new_date_range = date_range.intersection(timeseries_date_range)
-        #     if new_date_range:
-        #         new_date_ranges.append(new_date_range)
-        # return new_date_ranges
+        new_date_ranges = []
+        for date_range in date_ranges:
+            new_date_range = date_range.intersection(timeseries_date_range)
+            if new_date_range:
+                new_date_ranges.append(new_date_range)
+        return new_date_ranges
 
     def _download_multiple_using_get_batch_status(
         self,
@@ -1060,7 +1060,7 @@ class PVOutput:
                 timeseries["query_date"] = pd.Timestamp(date_to_load)
                 key = system_id_to_hdf_key(pv_system_id)
                 print(key)
-                with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
+                with pd.HDFStore(output_filename, mode="a") as store:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", tables.NaturalNameWarning)
                         store.append(key=key, value=timeseries, data_columns=True)
