@@ -21,15 +21,14 @@ pass their equivalent arguments to the command,
 or create and use a ~/.pvoutput.yml file as described in the PVOutput library documentation
 """
 
-from pvoutput import *
-
-import click as cl
 import datetime as dt
+import logging
+import pathlib
 import sys
 import os
 import pandas as pd
-import pathlib
-import logging
+
+from pvoutput import *
 
 
 @cl.command()
