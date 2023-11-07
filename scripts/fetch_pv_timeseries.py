@@ -23,6 +23,7 @@ or create and use a ~/.pvoutput.yml file as described in the PVOutput library do
 
 import datetime as dt
 import logging
+import os
 import pathlib
 import sys
 import os
