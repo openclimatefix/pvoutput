@@ -23,9 +23,10 @@ or create and use a ~/.pvoutput.yml file as described in the PVOutput library do
 
 import datetime as dt
 import logging
+import os
 import pathlib
 import sys
-import os
+
 import pandas as pd
 
 from pvoutput import *
@@ -37,7 +38,7 @@ from pvoutput import *
     "--systemfile",
     "systemfile_path",
     envvar=os.environ.get("SYSTEM_FILE"),
-    default='./examples/pv_data/PVOutput_India_systems.csv',
+    default="./examples/pv_data/PVOutput_India_systems.csv",
     required=True,
     type=cl.Path(exists=True),
 )
@@ -54,8 +55,16 @@ from pvoutput import *
 )
 @cl.option("--enddate", "end_date", envvar="ENDDATE", default="2019-08-20", type=cl.DateTime())
 @cl.option("--data_service_url", envvar="DATA_SERVICE_URL")
-@cl.option("--pvo_systemid", envvar="PVOUTPUT_AUTH_SYSTEMID", default="68732", required=True, type=str)
-@cl.option("--pvo_apikey", envvar="PVOUTPUT_AUTH_APIKEY", default="3f784ff6cfa27c44436f88da0c429b410687ad14",required=True, type=str)
+@cl.option(
+    "--pvo_systemid", envvar="PVOUTPUT_AUTH_SYSTEMID", default="68732", required=True, type=str
+)
+@cl.option(
+    "--pvo_apikey",
+    envvar="PVOUTPUT_AUTH_APIKEY",
+    default="3f784ff6cfa27c44436f88da0c429b410687ad14",
+    required=True,
+    type=str,
+)
 def run(
     output_directory: str,
     systemfile_path: str,
