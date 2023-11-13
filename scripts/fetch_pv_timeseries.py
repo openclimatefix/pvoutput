@@ -26,7 +26,7 @@ import logging
 import os
 import pathlib
 import sys
-import os
+
 import click as cl
 import pandas as pd
 
