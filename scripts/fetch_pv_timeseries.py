@@ -21,14 +21,16 @@ pass their equivalent arguments to the command,
 or create and use a ~/.pvoutput.yml file as described in the PVOutput library documentation
 """
 
-from pvoutput import *
+import datetime as dt
+import logging
+import os
+import pathlib
+import sys
 
 import click as cl
-import datetime as dt
-import sys
 import pandas as pd
-import pathlib
-import logging
+
+from pvoutput import *
 
 
 @cl.command()
@@ -36,7 +38,7 @@ import logging
     "-s",
     "--systemfile",
     "systemfile_path",
-    envvar="SYSTEMFILE",
+    envvar="SYSTEM_FILE",
     required=True,
     type=cl.Path(exists=True),
 )
@@ -45,14 +47,13 @@ import logging
     "--outdir",
     "output_directory",
     envvar="OUTDIR",
-    default="/mnt/storage_b/data/ocf/solar_pv_nowcasting/nowcasting_dataset_pipeline/PV/PVOutput.org",
     type=cl.Path(exists=False, dir_okay=True),
 )
 @cl.option(
-    "--startdate", "start_date", envvar="STARTDATE", default="2019-05-20", type=cl.DateTime()
+    "--startdate", "start_date", envvar="STARTDATE", default="2020-05-20", type=cl.DateTime()
 )
-@cl.option("--enddate", "end_date", envvar="ENDDATE", default="2019-08-20", type=cl.DateTime())
-@cl.option("--data_service_url", envvar="DATA_SERVICE_URL")
+@cl.option("--enddate", "end_date", envvar="ENDDATE", default="2023-08-20", type=cl.DateTime())
+@cl.option("--data_service_url", envvar="DATA_SERVICE_URL", default="https://pvoutput.org")
 @cl.option("--pvo_systemid", envvar="PVOUTPUT_AUTH_SYSTEMID", required=True, type=str)
 @cl.option("--pvo_apikey", envvar="PVOUTPUT_AUTH_APIKEY", required=True, type=str)
 def run(

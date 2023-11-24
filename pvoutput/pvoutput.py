@@ -277,7 +277,7 @@ class PVOutput:
 
         # add timezone
         if timezone is not None:
-            pv_system_status = pv_system_status.tz_localize(timezone).tz_convert("UTC")
+            pv_system_status = pv_system_status.tz_convert(timezone).tz_convert("UTC")
 
         return pv_system_status
 
@@ -340,7 +340,6 @@ class PVOutput:
 
         pv_system_status = []
         for pv_system_status_text in pv_systems_status_text:
-
             try:
                 one_pv_system_status = process_system_status(
                     pv_system_status_text=pv_system_status_text, date=date
@@ -360,7 +359,7 @@ class PVOutput:
         if timezone is not None:
             pv_system_status["datetime"] = (
                 pd.DatetimeIndex(pv_system_status["datetime"])
-                .tz_localize(timezone)
+                .tz_convert(timezone)
                 .tz_convert("UTC")
             )
 
@@ -416,10 +415,17 @@ class PVOutput:
         for retry in range(max_retries):
             try:
                 pv_system_status_text = self._api_query(
-                    service="getbatchstatus", api_params=api_params, use_data_service=True, **kwargs
+                    service="getbatchstatus",
+                    api_params=api_params,
+                    use_data_service=True,
+                    **kwargs,
                 )
             except NoStatusFound:
-                _LOG.info("system_id %d: No status found for date_to %s", pv_system_id, date_to)
+                _LOG.info(
+                    "system_id %d: No status found for date_to %s",
+                    pv_system_id,
+                    date_to,
+                )
                 pv_system_status_text = ""
                 break
 
@@ -516,6 +522,79 @@ class PVOutput:
         pv_metadata["system_id"] = pv_system_id
         pv_metadata.name = pv_system_id
         return pv_metadata
+
+    def get_metadata_for_country(
+        self, country_code: str, start_id_range: int, end_id_range: int, **kwargs
+    ) -> pd.DataFrame:
+        """Get metadata for a single PV system.
+
+        Args:
+            country_code: str,
+            start_id_range: int,
+            end_id_range: int,
+
+        Returns:
+            pd.Dataframe.  Index is:
+                system_id,
+                system_size_W,
+                postcode,
+                num_panels,
+                panel_power_W,
+                num_inverters,
+                inverter_capacity_W,
+                orientation,
+                array_tilt_degrees,
+                shade,
+                install_date,
+                latitude,
+                longitude,
+                status_interval_minutes,
+                secondary_num_panels,
+                secondary_panel_capacity_W_each,
+                secondary_orientation,
+                secondary_array_tilt_degrees
+        """
+        pv_metadata_text = self._api_query(
+            service="getcountrysystem",
+            api_params={
+                "c": country_code,  # Provide data about secondary array, if present.
+                "from": start_id_range,
+                "to": end_id_range,
+            },
+            **kwargs,
+        )
+
+        _LOG.debug(f"getting metadata for {country_code} for {start_id_range} to {end_id_range}")
+        print(
+            f"Getting metadata for country code: {country_code} for {start_id_range} to {end_id_range}"
+        )
+
+        pv_metadata_for_country = pd.read_csv(
+            StringIO(pv_metadata_text),
+            lineterminator="\n",
+            names=[
+                "system_id",
+                "system_size_W",
+                "postcode",
+                "num_panels",
+                "panel_power_W",
+                "num_inverters",
+                "inverter_capacity_W",
+                "orientation",
+                "array_tilt_degrees",
+                "shade",
+                "install_date",
+                "latitude",
+                "longitude",
+                "status_interval_minutes",
+                "secondary_num_panels",
+                "secondary_panel_capacity_W_each",
+                "secondary_orientation",
+                "secondary_array_tilt_degrees",
+            ],
+            parse_dates=["install_date"],
+        )
+        return pv_metadata_for_country
 
     def get_statistic(
         self,
@@ -720,10 +799,13 @@ class PVOutput:
                 output_filename, pv_system_id, start_date, end_date
             )
 
-            # How much data is actually available?
-            date_ranges_to_download = self._filter_date_range(
-                output_filename, pv_system_id, date_ranges_to_download, min_data_availability
-            )
+            # # How much data is actually available?
+            # date_ranges_to_download = self._filter_date_range(
+            #     output_filename,
+            #     pv_system_id,
+            #     date_ranges_to_download,
+            #     min_data_availability,
+            # )
 
             if not date_ranges_to_download:
                 _LOG.info("system_id %d: No data left to download :)", pv_system_id)
@@ -861,7 +943,11 @@ class PVOutput:
         return new_date_ranges
 
     def _download_multiple_using_get_batch_status(
-        self, output_filename, pv_system_id, date_ranges_to_download, timezone: Optional[str] = None
+        self,
+        output_filename,
+        pv_system_id,
+        date_ranges_to_download,
+        timezone: Optional[str] = None,
     ):
         years = merge_date_ranges_to_years(date_ranges_to_download)
         dates_to = [year.end_date for year in years]
@@ -875,7 +961,11 @@ class PVOutput:
                 sort_and_de_dupe_pv_system(store, pv_system_id)
 
     def _download_multiple_using_get_status(
-        self, output_filename, pv_system_id, date_ranges_to_download, timezone: Optional[str] = None
+        self,
+        output_filename,
+        pv_system_id,
+        date_ranges_to_download,
+        timezone: Optional[str] = None,
     ):
         for date_range in date_ranges_to_download:
             dates = date_range.date_range()
@@ -904,7 +994,9 @@ class PVOutput:
                 timeseries = self.get_batch_status(pv_system_id, date_to=date_to_load)
             if timeseries.empty:
                 _LOG.info(
-                    "system_id %d: Got empty timeseries back for %s", pv_system_id, date_to_load
+                    "system_id %d: Got empty timeseries back for %s",
+                    pv_system_id,
+                    date_to_load,
                 )
                 if use_get_status:
                     _append_missing_date_range(
@@ -924,8 +1016,8 @@ class PVOutput:
                     )
             else:
                 total_rows += len(timeseries)
-                _LOG.info(f'Adding timezone {timezone} to {total_rows} rows')
-                timeseries = timeseries.tz_localize(timezone)
+                _LOG.info(f"Adding timezone {timezone} to {total_rows} rows")
+                timeseries = timeseries.tz_convert(timezone)
                 _LOG.info(
                     "system_id: %d: %d rows retrieved: %s to %s",
                     pv_system_id,
@@ -946,7 +1038,8 @@ class PVOutput:
                 timeseries["datetime_of_API_request"] = datetime_of_api_request
                 timeseries["query_date"] = pd.Timestamp(date_to_load)
                 key = system_id_to_hdf_key(pv_system_id)
-                with pd.HDFStore(output_filename, mode="a", complevel=9) as store:
+                print(key)
+                with pd.HDFStore(output_filename, mode="a") as store:
                     with warnings.catch_warnings():
                         warnings.simplefilter("ignore", tables.NaturalNameWarning)
                         store.append(key=key, value=timeseries, data_columns=True)
@@ -1049,7 +1142,10 @@ class PVOutput:
             setattr(self, param_name, header_value)
 
         self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(self.rate_limit_reset_time)
-        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
+        if self.rate_limit_reset_time.tzinfo is None:
+            self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
+        else:
+            self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
 
         _LOG.debug("%s", self.rate_limit_info())
 
@@ -1191,9 +1287,12 @@ def check_pv_system_status(pv_system_status: pd.DataFrame, requested_date: date)
 
 
 def _append_missing_date_range(
-    output_filename, pv_system_id, missing_start_date, missing_end_date, datetime_of_api_request
+    output_filename,
+    pv_system_id,
+    missing_start_date,
+    missing_end_date,
+    datetime_of_api_request,
 ):
-
     data = {
         "missing_start_date_PV_localtime": pd.Timestamp(missing_start_date),
         "missing_end_date_PV_localtime": pd.Timestamp(missing_end_date),
@@ -1258,7 +1357,10 @@ def _convert_consecutive_dates_to_date_ranges(missing_dates):
 
     end_date = missing_dates[-1]
     new_missing.append(
-        {"missing_start_date_PV_localtime": start_date, "missing_end_date_PV_localtime": end_date}
+        {
+            "missing_start_date_PV_localtime": start_date,
+            "missing_end_date_PV_localtime": end_date,
+        }
     )
 
     return pd.DataFrame(new_missing)
