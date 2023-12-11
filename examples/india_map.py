@@ -1,7 +1,6 @@
 """ Example of plotting PVOutput India system locations on a map."""
-import os
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 
 # load csv file with system metadata
 pv_system_metadata = "./examples/pv_data/PVOutput_India_systems.csv"

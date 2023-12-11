@@ -1,10 +1,12 @@
 """Chart generation for a single system. This shows the cumulative energy
-generation or instantaneous power generation over time. Some of the commented out code can be used to filter the data by date or plot max, mean, min, median values, etc."""
+generation or instantaneous power generation over time. Some of the commented out code can be used to filter the data by date or plot max, mean, min, median values, etc.
+"""
 import os
-import pandas as pd
-import numpy as np
-import plotly.express as px
+
 import h5py
+import numpy as np
+import pandas as pd
+import plotly.express as px
 
 # load hdf file with the generation data for each system
 pv_systems_hdf = os.environ.get("PV_DATA_HDF")

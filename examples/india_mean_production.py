@@ -3,11 +3,12 @@ This example shows the mean daily production per system by month.
 This makes a plot with 2 columns and half as many rows as there are systems with data.
 """
 import os
-import pandas as pd
-from plotly.subplots import make_subplots
-import numpy as np
-import plotly.graph_objects as go
+
 import h5py
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # load hdf file with the generation data for each system
 pv_data_hdf_file = os.environ.get("SYSTEM_DATA")
@@ -66,9 +67,7 @@ with h5py.File(pv_data_hdf_file, "r") as f:
         # df["index"] = df[df["index"] > pd.Timestamp("2019-01-01")]
         df_pv_system = df.groupby(pd.Grouper(key="index", freq="M")).mean()
         df_pv_system["System ID"] = system_id
-        df_pv_system = pd.DataFrame(
-            df_pv_system, columns=["cumulative_energy_gen_Wh", "System ID"]
-        )
+        df_pv_system = pd.DataFrame(df_pv_system, columns=["cumulative_energy_gen_Wh", "System ID"])
         # convert Wh to kWh
         df_pv_system["cumulative_energy_gen_kWh"] = (
             df_pv_system["cumulative_energy_gen_Wh"] / 1000
@@ -99,8 +98,6 @@ with h5py.File(pv_data_hdf_file, "r") as f:
             )
         i += 1
     fig.update_yaxes(title_text="kWh")
-    fig.update_layout(
-        height=3000, width=750, title_text="Mean Monthly Production per System"
-    )
+    fig.update_layout(height=3000, width=750, title_text="Mean Monthly Production per System")
     fig.update_annotations(font_size=12)
     fig.show()

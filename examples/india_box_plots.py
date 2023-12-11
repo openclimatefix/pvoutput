@@ -1,8 +1,8 @@
 """Box plots of max cumulative energy generation per system"""
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 import h5py
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
 
 # load hdf file with the generation data for each system
 pv_systems_hdf = os.environ.get("PV_DATA_HDF")
@@ -45,9 +45,7 @@ with h5py.File(pv_systems_hdf, "r") as f:
         df_pv_system["index"] = pd.to_datetime(df_pv_system["index"], unit="ns")
         df_pv_system = df_pv_system.groupby(pd.Grouper(key="index", freq="D")).max()
         df_pv_system["System ID"] = system_id
-        df_pv_system = pd.DataFrame(
-            df_pv_system, columns=["cumulative_energy_gen_Wh", "System ID"]
-        )
+        df_pv_system = pd.DataFrame(df_pv_system, columns=["cumulative_energy_gen_Wh", "System ID"])
         df_pv_system["cumulative_energy_gen_kWh"] = (
             df_pv_system["cumulative_energy_gen_Wh"] / 1000
         ).astype(float)

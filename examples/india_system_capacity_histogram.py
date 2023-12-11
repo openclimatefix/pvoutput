@@ -1,5 +1,6 @@
 """Histogram of system capacities for India."""
 import os
+
 import pandas as pd
 import plotly.express as px
 

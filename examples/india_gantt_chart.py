@@ -1,9 +1,10 @@
 """Gantt chart for India PV systems. This shows where there are gaps in the data."""
 import os
-import pandas as pd
-import numpy as np
-import plotly.express as px
+
 import h5py
+import numpy as np
+import pandas as pd
+import plotly.express as px
 
 # load hdf file with the generation data for each system
 pv_data_hdf = os.environ.get("PV_DATA_HDF")
