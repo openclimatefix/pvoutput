@@ -3,6 +3,7 @@ Downloads all country codes from PVOutput.
 Prints and saves a dictionary mapping the country names to
 their codes.
 """
+
 import json
 
 import urllib3
