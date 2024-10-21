@@ -10,6 +10,7 @@ Provides both an importable method and a CLI.
 - Jamie Taylor <jamie.taylor@sheffield.ac.uk>
 - First Authored: 2021-11-16
 """
+
 import argparse
 import logging
 import os
