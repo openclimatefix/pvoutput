@@ -1,4 +1,5 @@
-""" Constants used in this repo """
+"""Constants used in this repo"""
+
 import os
 from datetime import timedelta
 from urllib.parse import urljoin

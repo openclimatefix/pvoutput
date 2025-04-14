@@ -1,4 +1,5 @@
-""" Util functions"""
+"""Util functions"""
+
 import logging
 import os
 import sys

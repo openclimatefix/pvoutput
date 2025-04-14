@@ -1,4 +1,5 @@
-"""Date Range Class """
+"""Date Range Class"""
+
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Iterable, List, Union
