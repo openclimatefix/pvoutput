@@ -13,3 +13,4 @@ jupyter
 urllib3
 requests
 beautifulsoup4
+nowcasting_datamodel
