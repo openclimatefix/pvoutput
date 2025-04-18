@@ -1,4 +1,5 @@
-""" Custom Exeception classes """
+"""Custom Exeception classes"""
+
 import requests
 
 

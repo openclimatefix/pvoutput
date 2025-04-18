@@ -1,4 +1,5 @@
-""" Code for scraping for pv systems """
+"""Code for scraping for pv systems"""
+
 import re
 from copy import copy
 from typing import Iterable, Optional, Union

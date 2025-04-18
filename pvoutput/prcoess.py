@@ -1,4 +1,5 @@
-""" Function to process data """
+"""Function to process data"""
+
 import logging
 from io import StringIO
 

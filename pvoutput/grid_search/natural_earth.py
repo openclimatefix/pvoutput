@@ -1,4 +1,5 @@
 """Retrieve Natural Earth world boundaries."""
+
 import logging
 import os
 from io import BytesIO

@@ -1,4 +1,5 @@
-""" Main PV Output class to get data from pvoutput.org """
+"""Main PV Output class to get data from pvoutput.org"""
+
 import logging
 import os
 import time
@@ -924,7 +925,7 @@ class PVOutput:
                     )
             else:
                 total_rows += len(timeseries)
-                _LOG.info(f'Adding timezone {timezone} to {total_rows} rows')
+                _LOG.info(f"Adding timezone {timezone} to {total_rows} rows")
                 timeseries = timeseries.tz_localize(timezone)
                 _LOG.info(
                     "system_id: %d: %d rows retrieved: %s to %s",
