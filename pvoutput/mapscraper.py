@@ -351,6 +351,7 @@ def clean_soup(soup):
     """Function to clean scraped soup object.
 
     Note that the downloaded soup could change over time.
+
     Args:
         soup: bs4.BeautifulSoup
 

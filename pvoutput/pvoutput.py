@@ -1050,7 +1050,7 @@ class PVOutput:
             setattr(self, param_name, header_value)
 
         self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(self.rate_limit_reset_time)
-        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
+        self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
 
         _LOG.debug("%s", self.rate_limit_info())
 
