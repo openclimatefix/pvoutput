@@ -14,6 +14,15 @@ This code is a work-in-progress.  The aim is to provide both a Python library fo
 $ pip install pvoutput-ocf
 ```
 
+## Development installation
+
+If you want to install the latest development version directly from GitHub:
+
+```bash
+pip install git+https://github.com/openclimatefix/pvoutput.git
+```
+
+
 ## Register with PVOutput.org
 
 You need to get an API key *and* a system ID from PVOutput.org.
@@ -56,13 +65,6 @@ If you have subscribed to PVOutput's data service then either
 
 The `data_service_url` should end in `.org` (note the `data_service_url` doesn't include the `/service/r2` part of the URL)
 For example: `data_service_url: https://pvoutput.org/`
-
-
-## Install pvoutput Python library
-
-```bash
-pip install -e git+https://github.com/openclimatefix/pvoutput.git@main#egg=pvoutput-ocf
-```
 
 # Usage
 
