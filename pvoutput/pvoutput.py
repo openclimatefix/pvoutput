@@ -1052,9 +1052,9 @@ class PVOutput:
         self.rate_limit_reset_time = pd.Timestamp.utcfromtimestamp(self.rate_limit_reset_time)
         # Fix for Issue #123: Handle both naive and aware timestamps
         if self.rate_limit_reset_time.tzinfo is None:
-           self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
+            self.rate_limit_reset_time = self.rate_limit_reset_time.tz_localize("utc")
         else:
-           self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
+            self.rate_limit_reset_time = self.rate_limit_reset_time.tz_convert("utc")
 
         _LOG.debug("%s", self.rate_limit_info())
 
