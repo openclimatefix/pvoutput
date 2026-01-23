@@ -53,3 +53,4 @@ convention = "google"
 
 [lint.per-file-ignores]
 "__init__.py" = ["F401", "E402"]
+"setup.py" = ["D100"]
