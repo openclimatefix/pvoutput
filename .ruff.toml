@@ -31,9 +31,6 @@ exclude = [
     "scripts",
 ]
 
-# Group violations by containing file.
-output-format = "github"
-
 [lint]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["E", "F", "D", "I"]
