@@ -172,7 +172,7 @@ def _convert_to_country_code(country: Union[str, int]) -> int:
 
 
 def _page_has_next_link(soup: BeautifulSoup):
-    return bool(soup.find_all("a", text="Next"))
+    return bool(soup.find_all("a", string="Next"))
 
 
 # ############ PROCESS HTML #########################
@@ -276,7 +276,7 @@ def _convert_metadata_cols_to_numeric(df: pd.DataFrame) -> pd.DataFrame:
 def _process_output_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
 
     # get all data
-    outputs_col = soup.find_all(text=re.compile(r"\d Days"))
+    outputs_col = soup.find_all(string=re.compile(r"\d Days"))
 
     # format data as strings
     outputs_col = [str(col) for col in outputs_col]
@@ -305,7 +305,7 @@ def _process_generation_and_average_cols(
 ) -> pd.DataFrame:
     # _soup = deepcopy(soup)
     [s.decompose() for s in soup.select("a")]
-    generation_and_average_cols = soup.find_all(text=re.compile(r"\d[Mk]Wh$"))
+    generation_and_average_cols = soup.find_all(string=re.compile(r"\d[Mk]Wh$"))
     generation_col = generation_and_average_cols[0::2]
     average_col = generation_and_average_cols[1::2]
     df = pd.DataFrame(
@@ -320,7 +320,7 @@ def _process_generation_and_average_cols(
 
 
 def _process_efficiency_col(soup: BeautifulSoup, index: Optional[Iterable] = None) -> pd.Series:
-    efficiency_col = soup.find_all(text=re.compile(r"\dkWh/kW"))
+    efficiency_col = soup.find_all(string=re.compile(r"\dkWh/kW"))
     return pd.Series(efficiency_col, name="average_efficiency_kWh_per_kW", index=index)
 
 
@@ -351,6 +351,7 @@ def clean_soup(soup):
     """Function to clean scraped soup object.
 
     Note that the downloaded soup could change over time.
+
     Args:
         soup: bs4.BeautifulSoup
 
