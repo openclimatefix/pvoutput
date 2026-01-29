@@ -45,10 +45,23 @@ def mock_natural_earth(mocker):
     # FIX: Removed the redundant 'NAME' column. We only need lowercase 'name'.
     fake_world = gpd.GeoDataFrame(
         {
-            "name": ["United Kingdom", "Luxembourg", "Bosnia and Herz.", "Croatia", "Hungary", "Romania", "Bulgaria", "North Macedonia", "Kosovo", "Albania", "Montenegro", "Serbia"], 
-            "geometry": [poly_degrees] * 12 
-        }, 
-        crs="EPSG:4326"
+            "name": [
+                "United Kingdom",
+                "Luxembourg",
+                "Bosnia and Herz.",
+                "Croatia",
+                "Hungary",
+                "Romania",
+                "Bulgaria",
+                "North Macedonia",
+                "Kosovo",
+                "Albania",
+                "Montenegro",
+                "Serbia",
+            ],
+            "geometry": [poly_degrees] * 12,
+        },
+        crs="EPSG:4326",
     )
 
     # 3. CRITICAL: Convert to Meters (EPSG:4087)
