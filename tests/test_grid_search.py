@@ -2,9 +2,11 @@ from pvoutput.grid_search import GridSearch
 
 SHOW = False
 
+
 def test_init():
     """Test init"""
     _ = GridSearch()
+
 
 def test_list_countries(mock_natural_earth):
     """Get list of countries"""
@@ -12,6 +14,7 @@ def test_list_countries(mock_natural_earth):
     countries = grd.nat_earth.list_countries()
     assert len(countries) > 0
     assert "United Kingdom" in countries
+
 
 def test_uk_grid(mock_natural_earth):
     """Example 1: Get UK grid"""
@@ -27,6 +30,7 @@ def test_uk_grid(mock_natural_earth):
     )
     assert not ukgrid.empty
 
+
 def test_luxembourg_grid(mock_natural_earth):
     """Example 2: Make Luxembourg grid"""
     grd = GridSearch()
@@ -34,6 +38,7 @@ def test_luxembourg_grid(mock_natural_earth):
         countries=["Luxembourg"], buffer=50, search_radius=24.5, local_crs_epsg=2169, show=SHOW
     )
     assert not luxgrid.empty
+
 
 def test_sheffield_grid(mock_natural_earth):
     """Make grid around Sheffield"""
@@ -48,6 +53,7 @@ def test_sheffield_grid(mock_natural_earth):
         show=SHOW,
     )
     assert not shefgrid.empty
+
 
 def test_balkan_grid(mock_natural_earth):
     """Plot grid around Balkan area"""
