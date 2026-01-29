@@ -39,10 +39,10 @@ def mock_natural_earth(mocker):
     poly_degrees = Polygon(coords)
     
     # 2. Create the GeoDataFrame in Lat/Lon
+    # FIX: Removed the redundant 'NAME' column. We only need lowercase 'name'.
     fake_world = gpd.GeoDataFrame(
         {
             "name": ["United Kingdom", "Luxembourg", "Bosnia and Herz.", "Croatia", "Hungary", "Romania", "Bulgaria", "North Macedonia", "Kosovo", "Albania", "Montenegro", "Serbia"], 
-            "NAME": ["United Kingdom", "Luxembourg", "Bosnia and Herz.", "Croatia", "Hungary", "Romania", "Bulgaria", "North Macedonia", "Kosovo", "Albania", "Montenegro", "Serbia"],
             "geometry": [poly_degrees] * 12 
         }, 
         crs="EPSG:4326"
