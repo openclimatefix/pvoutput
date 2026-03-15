@@ -100,3 +100,117 @@ def test_check_pv_system_status():
     bad_timeseries2 = _make_timeseries("2019-01-02 00:00", "2019-01-03 00:00")
     with pytest.raises(ValueError):
         pvoutput.check_pv_system_status(bad_timeseries2, DATE)
+
+
+def test_read_csv_calls_do_not_use_deprecated_parse_dates(monkeypatch):
+    pv = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+    original_read_csv = pd.read_csv
+    parse_dates_values = []
+
+    def wrapped_read_csv(*args, **kwargs):
+        if "parse_dates" in kwargs:
+            parse_dates_values.append(kwargs["parse_dates"])
+        return original_read_csv(*args, **kwargs)
+
+    monkeypatch.setattr(pd, "read_csv", wrapped_read_csv)
+
+    api_responses = {
+        "getstatus": "20220301,08:00,2,3,4,5,6,7,8;20220301,07:45,1,2,3,4,5,6,7",
+        "getsystem": (
+            "System Name,5000,Address,10,500,PanelBrand,1,5000,InverterBrand,180,30,None,"
+            "2020-01-01,-0.1,51.5,5,0,0,0,0"
+        ),
+        "getstatistic": "100,10,5,1,9,2,30,2022-01-01,2022-01-31,3,2022-01-15",
+    }
+
+    def fake_api_query(service, api_params, **kwargs):
+        return api_responses[service]
+
+    monkeypatch.setattr(pv, "_api_query", fake_api_query)
+
+    pv.get_status(pv_system_id=1, date="20220301", historic=False)
+    pv.get_metadata(pv_system_id=1)
+    pv.get_statistic(pv_system_id=1, date_from="20220101", date_to="20220131")
+
+    assert not parse_dates_values
+
+
+def test_get_status_datetime_index_contract(monkeypatch):
+    pv = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+    def fake_api_query(service, api_params, **kwargs):
+        assert service == "getstatus"
+        return "20220301,08:00,2,3,4,5,6,7,8;20220301,07:45,1,2,3,4,5,6,7"
+
+    monkeypatch.setattr(pv, "_api_query", fake_api_query)
+
+    result = pv.get_status(pv_system_id=1, date="20220301", historic=False)
+
+    assert isinstance(result.index, pd.DatetimeIndex)
+    assert result.index.name == "datetime"
+    assert result.index.is_monotonic_increasing
+    assert result.index[0] == pd.Timestamp("2022-03-01 07:45:00")
+    assert result.index[-1] == pd.Timestamp("2022-03-01 08:00:00")
+    assert "date" not in result.columns
+    assert "time" not in result.columns
+    assert "datetime" not in result.columns
+
+
+def test_get_status_timezone_conversion_contract(monkeypatch):
+    pv = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+    def fake_api_query(service, api_params, **kwargs):
+        assert service == "getstatus"
+        return "20220101,07:45,1,2,3,4,5,6,7"
+
+    monkeypatch.setattr(pv, "_api_query", fake_api_query)
+
+    result = pv.get_status(
+        pv_system_id=1,
+        date="20220101",
+        historic=False,
+        timezone="Europe/London",
+    )
+
+    assert isinstance(result.index, pd.DatetimeIndex)
+    assert result.index.name == "datetime"
+    assert result.index.tz is not None
+    assert result.index[0].utcoffset() == pd.Timedelta(0)
+
+
+def test_get_metadata_install_date_type_contract(monkeypatch):
+    pv = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+    def fake_api_query(service, api_params, **kwargs):
+        assert service == "getsystem"
+        return (
+            "System Name,5000,Address,10,500,PanelBrand,1,5000,InverterBrand,180,30,None,"
+            "2020-01-01,-0.1,51.5,5,0,0,0,0"
+        )
+
+    monkeypatch.setattr(pv, "_api_query", fake_api_query)
+
+    result = pv.get_metadata(pv_system_id=123)
+
+    assert isinstance(result["install_date"], pd.Timestamp)
+    assert result["install_date"] == pd.Timestamp("2020-01-01")
+
+
+def test_get_statistic_date_columns_type_contract(monkeypatch):
+    pv = pvoutput.PVOutput(api_key="fake", system_id="fake")
+
+    def fake_api_query(service, api_params, **kwargs):
+        assert service == "getstatistic"
+        return "100,10,5,1,9,2,30,2022-01-01,2022-01-31,3,2022-01-15"
+
+    monkeypatch.setattr(pv, "_api_query", fake_api_query)
+
+    result = pv.get_statistic(pv_system_id=1, date_from="20220101", date_to="20220131")
+
+    assert pd.api.types.is_datetime64_any_dtype(result["actual_date_from"])
+    assert pd.api.types.is_datetime64_any_dtype(result["actual_date_to"])
+    assert pd.api.types.is_datetime64_any_dtype(result["record_efficiency_date"])
+    assert result.loc[1, "actual_date_from"] == pd.Timestamp("2022-01-01")
+    assert result.loc[1, "actual_date_to"] == pd.Timestamp("2022-01-31")
+    assert result.loc[1, "record_efficiency_date"] == pd.Timestamp("2022-01-15")

@@ -271,10 +271,15 @@ class PVOutput:
             StringIO(pv_system_status_text),
             lineterminator=";",
             names=["date", "time"] + columns,
-            parse_dates={"datetime": ["date", "time"]},
-            index_col=["datetime"],
             dtype={col: np.float64 for col in columns},
-        ).sort_index()
+        )
+        pv_system_status["datetime"] = pd.to_datetime(
+            pv_system_status["date"].astype(str) + " " + pv_system_status["time"].astype(str),
+            format="%Y%m%d %H:%M",
+        )
+        pv_system_status = (
+            pv_system_status.drop(columns=["date", "time"]).set_index("datetime").sort_index()
+        )
 
         # add timezone
         if timezone is not None:
@@ -511,9 +516,10 @@ class PVOutput:
                 "secondary_orientation",
                 "secondary_array_tilt_degrees",
             ],
-            parse_dates=["install_date"],
             nrows=1,
-        ).squeeze()
+        )
+        pv_metadata["install_date"] = pd.to_datetime(pv_metadata["install_date"])
+        pv_metadata = pv_metadata.squeeze()
         pv_metadata["system_id"] = pv_system_id
         pv_metadata.name = pv_system_id
         return pv_metadata
@@ -588,8 +594,10 @@ class PVOutput:
             StringIO(pv_metadata_text),
             names=columns,
             dtype={col: np.float32 for col in numeric_cols},
-            parse_dates=date_cols,
         )
+        for col in date_cols:
+            pv_metadata[col] = pd.to_datetime(pv_metadata[col])
+
         if pv_metadata.empty:
             data = {col: np.float32(np.NaN) for col in numeric_cols}
             data.update({col: pd.NaT for col in date_cols})

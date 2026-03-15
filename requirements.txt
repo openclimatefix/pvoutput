@@ -6,6 +6,7 @@ shapely
 cython>0.15.1
 geopandas
 pytest
+pytest-mock
 pyyaml
 tables
 matplotlib

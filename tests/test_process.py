@@ -84,9 +84,8 @@ datetime,cumulative_energy_gen_Wh,instantaneous_power_gen_W,temperature_C,voltag
 2014-03-30 08:00:00,24.0,132.0,,"""
 
     df = process_batch_status(response_text)
-    correct_df = pd.read_csv(
-        StringIO(correct_interpretation_csv), parse_dates=["datetime"], index_col="datetime"
-    )
+    correct_df = pd.read_csv(StringIO(correct_interpretation_csv), index_col="datetime")
+    correct_df.index = pd.to_datetime(correct_df.index)
     pd.testing.assert_frame_equal(df, correct_df)
 
     empty_df = process_batch_status("")
